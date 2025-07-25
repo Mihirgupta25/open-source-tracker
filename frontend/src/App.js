@@ -10,6 +10,7 @@ function App() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('promptfoo');
   const [prVelocity, setPrVelocity] = useState([]);
+  const [issueHealth, setIssueHealth] = useState([]);
 
   function parseRepo(input) {
     const match = input.match(/github\.com\/(.+?\/[^\/?#]+)/);
@@ -69,12 +70,29 @@ function App() {
           const res = await fetch('http://localhost:4000/api/pr-velocity');
           const data = await res.json();
           if (Array.isArray(data)) {
-            setPrVelocity(data.map(d => ({
+            // Remove duplicates by keeping the entry with the highest rowid for each date
+            const byDate = {};
+            data.forEach(d => {
+              if (!byDate[d.date] || (d.rowid !== undefined && d.rowid > byDate[d.date].rowid)) {
+                byDate[d.date] = d;
+              }
+            });
+            const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+            // Add a dummy data point for the next day to ensure the last point is visible
+            let chartData = [...sorted.map(d => ({
               ...d,
-              // Keep date as raw YYYY-MM-DD string for XAxis
               date: d.date,
-              ratio: d.ratio !== undefined ? Number(d.ratio) : (d.average_duration_hours !== undefined ? Number(d.average_duration_hours) : 0)
-            })));
+              ratio: d.ratio !== undefined ? Number(d.ratio) : 0
+            }))];
+            if (chartData.length > 0) {
+              const lastDate = new Date(chartData[chartData.length - 1].date + 'T00:00:00Z');
+              const nextDate = new Date(lastDate);
+              nextDate.setDate(lastDate.getDate() + 1);
+              const nextDateStr = nextDate.toISOString().slice(0, 10);
+              chartData.push({ date: nextDateStr, ratio: null }); // Only date and ratio: null
+            }
+
+            setPrVelocity(chartData);
           } else {
             setPrVelocity([]);
           }
@@ -83,6 +101,46 @@ function App() {
         }
       }
       fetchPrVelocity();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'promptfoo') {
+      async function fetchIssueHealth() {
+        try {
+          const res = await fetch('http://localhost:4000/api/issue-health');
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            // Remove duplicates by keeping the entry with the highest rowid for each date
+            const byDate = {};
+            data.forEach(d => {
+              if (!byDate[d.date] || (d.rowid !== undefined && d.rowid > byDate[d.date].rowid)) {
+                byDate[d.date] = d;
+              }
+            });
+            const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+            // Add a dummy data point for the next day to ensure the last point is visible
+            let chartData = [...sorted.map(d => ({
+              ...d,
+              date: d.date,
+              ratio: d.ratio !== undefined ? Number(d.ratio) : 0
+            }))];
+            if (chartData.length > 0) {
+              const lastDate = new Date(chartData[chartData.length - 1].date + 'T00:00:00Z');
+              const nextDate = new Date(lastDate);
+              nextDate.setDate(lastDate.getDate() + 1);
+              const nextDateStr = nextDate.toISOString().slice(0, 10);
+              chartData.push({ date: nextDateStr, ratio: null }); // Only date and ratio: null
+            }
+            setIssueHealth(chartData);
+          } else {
+            setIssueHealth([]);
+          }
+        } catch {
+          setIssueHealth([]);
+        }
+      }
+      fetchIssueHealth();
     }
   }, [activeTab]);
 
@@ -148,29 +206,76 @@ function App() {
             <p style={{ fontSize: '1.1rem', color: '#3b3b5c', marginBottom: 18, textAlign: 'left' }}>
               This chart visualizes the ratio of merged to open pull requests for the selected repository over time. Each point represents the ratio on a specific day, helping you understand the pace at which pull requests are being merged relative to those remaining open.
             </p>
+
             {prVelocity.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 80, bottom: 40 }}>
+                <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date"
-                    label={{
-                      value: 'Date',
-                      position: 'insideBottom',
-                      dy: 20,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
+                  <XAxis dataKey="date" 
                     tickFormatter={date => {
-                      const d = new Date(date + 'T00:00:00Z');
-                      return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
+                      try {
+                        const d = new Date(date + 'T12:00:00Z');
+                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                      } catch (e) {
+                        return date;
+                      }
                     }}
                   />
                   <YAxis />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="ratio" stroke="#f59e42" dot={true} />
+                  <Tooltip 
+                    labelFormatter={date => {
+                      try {
+                        const d = new Date(date + 'T12:00:00Z');
+                        return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+                      } catch (e) {
+                        return date;
+                      }
+                    }}
+                  />
+                  <Line type="monotone" dataKey="ratio" stroke="#f59e42" strokeWidth={3} dot={{ r: 6, fill: "#f59e42" }} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
               <p style={{ color: '#888', marginTop: 24 }}>No pull request velocity data available.</p>
+            )}
+          </div>
+          {/* Issue Health Section */}
+          <div className="card">
+            <h2>Issue Health</h2>
+            <p style={{ fontSize: '1.1rem', color: '#3b3b5c', marginBottom: 18, textAlign: 'left' }}>
+              This chart visualizes the ratio of closed to open issues for the selected repository over time. Each point represents the ratio on a specific day, helping you understand how efficiently issues are being resolved relative to those remaining open.
+            </p>
+
+            {issueHealth.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={issueHealth} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" 
+                    tickFormatter={date => {
+                      try {
+                        const d = new Date(date + 'T12:00:00Z');
+                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                      } catch (e) {
+                        return date;
+                      }
+                    }}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    labelFormatter={date => {
+                      try {
+                        const d = new Date(date + 'T12:00:00Z');
+                        return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+                      } catch (e) {
+                        return date;
+                      }
+                    }}
+                  />
+                  <Line type="monotone" dataKey="ratio" stroke="#10b981" strokeWidth={3} dot={{ r: 6, fill: "#10b981" }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p style={{ color: '#888', marginTop: 24 }}>No issue health data available.</p>
             )}
           </div>
         </>

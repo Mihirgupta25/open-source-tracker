@@ -68,6 +68,10 @@ A modern web app to track GitHub repository traction metrics, including star gro
 
 2. **Install dependencies:**
    ```bash
+   # Option 1: Use the setup script (recommended)
+   bash setup.sh
+   
+   # Option 2: Manual installation
    cd backend
    npm install
    cd ../frontend
@@ -95,9 +99,12 @@ A modern web app to track GitHub repository traction metrics, including star gro
 6. **(Optional) Start background data collectors:**
    - For star growth every 3 hours:
      ```bash
-     node backend/star_tracker_3hr.js &
+     node backend/scripts/star_tracker_3hr.js &
      ```
-   - For PR velocity, use the provided scripts in `backend/` (see below).
+   - For PR velocity daily collection:
+     ```bash
+     node backend/scripts/pr_velocity_daily.js &
+     ```
 
 ---
 
@@ -109,11 +116,12 @@ open-source-tracker/
     databases/
       star_growth.db
       pr_velocity.db
+    scripts/
+      star_tracker_3hr.js
+      pr_velocity_daily.js
+      pr_ratio_historical.js
+      pr_velocity_historical.js
     index.js
-    star_tracker.js
-    star_tracker_3hr.js
-    pr_ratio_historical.js
-    pr_velocity_historical.js
     ...
   frontend/
     src/
@@ -130,7 +138,7 @@ open-source-tracker/
 ## Data Collection & Scripts
 
 ### Star Growth
-- **Script:** `backend/star_tracker_3hr.js`
+- **Script:** `backend/scripts/star_tracker_3hr.js`
 - **Interval:** Every 3 hours (customizable)
 - **Database:** `backend/databases/star_growth.db`
 - **Table:** `stars` (fields: id, repo, timestamp, count)
@@ -139,13 +147,17 @@ open-source-tracker/
   - Inserts a new row with the timestamp and star count.
 
 ### Pull Request Velocity
-- **Script:** `backend/pr_ratio_historical.js`
-- **Database:** `backend/databases/pr_velocity.db`
-- **Table:** `pr_ratios` (fields: id, repo, date, merged_count, open_count, ratio)
-- **How it works:**
-  - For a given day, fetches the number of merged PRs and open PRs for Promptfoo.
-  - Calculates the ratio and inserts it into the database.
-  - Can be run for any date range or a single day.
+- **Daily Collection:** `backend/scripts/pr_velocity_daily.js`
+  - **Interval:** Every 24 hours at 12:00 PM PST
+  - **Database:** `backend/databases/pr_velocity.db`
+  - **Table:** `pr_ratios` (fields: id, repo, date, merged_count, open_count, ratio)
+  - **How it works:**
+    - Automatically fetches merged and open PR counts for the current day.
+    - Calculates the ratio and inserts it into the database.
+    - Runs continuously every 24 hours.
+- **Historical Scripts:**
+  - `backend/scripts/pr_ratio_historical.js` - For manual historical data collection
+  - `backend/scripts/pr_velocity_historical.js` - For historical PR data
 - **Manual Entry:**
   - You can insert a row directly using SQLite for custom or test data.
 
@@ -160,7 +172,7 @@ open-source-tracker/
 ## Customization
 
 - **Change Data Collection Interval:**
-  - Edit the `INTERVAL_MINUTES` variable in `star_tracker_3hr.js` or create a new script for a different interval.
+  - Edit the `INTERVAL_MINUTES` variable in `backend/scripts/star_tracker_3hr.js` or create a new script for a different interval.
 - **Track a Different Repository:**
   - Change the `REPO` variable in the scripts to the desired `owner/repo`.
 - **Add More Metrics:**
@@ -187,3 +199,18 @@ Pull requests are welcome! For major changes, please open an issue first to disc
 ## License
 
 MIT
+
+## Troubleshooting
+
+**Missing Module Errors (e.g., 'better-sqlite3')**
+
+If you see an error like `Error: Cannot find module 'better-sqlite3'` or any other missing dependency error, make sure you have run:
+
+```bash
+cd backend
+npm install
+cd ../frontend
+npm install
+```
+
+This will install all required dependencies for both backend and frontend. If you still have issues, try deleting the `node_modules` folder and `package-lock.json` in the affected directory and run `npm install` again.

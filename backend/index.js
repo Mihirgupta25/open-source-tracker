@@ -50,9 +50,23 @@ app.get('/api/star-history', (req, res) => {
 app.get('/api/pr-velocity', (req, res) => {
   try {
     const rows = prVelocityDb.prepare(`
-      SELECT date, ratio as average_duration_hours
+      SELECT rowid as rowid, date, ratio
       FROM pr_ratios
-      WHERE repo = ? AND date >= date('now', '-7 days')
+      WHERE repo = ?
+      ORDER BY date ASC
+    `).all('promptfoo/promptfoo');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/issue-health', (req, res) => {
+  try {
+    const rows = prVelocityDb.prepare(`
+      SELECT rowid as rowid, date, ratio
+      FROM issue_ratios
+      WHERE repo = ?
       ORDER BY date ASC
     `).all('promptfoo/promptfoo');
     res.json(rows);
