@@ -5,7 +5,7 @@ const path = require('path');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO = 'promptfoo/promptfoo';
-const INTERVAL_MINUTES = 30;
+const INTERVAL_MINUTES = 10;
 
 // Setup SQLite DB
 const dbPath = path.join(__dirname, 'star_growth.db');
@@ -37,6 +37,19 @@ async function trackStars() {
   }
 }
 
-// Run immediately, then every 30 minutes
-trackStars();
-setInterval(trackStars, INTERVAL_MINUTES * 60 * 1000); 
+// Run immediately, then every 10 minutes at multiples of 10 past the hour
+function startAlignedInterval(fn, intervalMinutes) {
+  const now = new Date();
+  const ms = now.getMilliseconds();
+  const sec = now.getSeconds();
+  const min = now.getMinutes();
+  const nextMultiple = Math.ceil(min / intervalMinutes) * intervalMinutes;
+  const minutesToWait = (nextMultiple - min) % intervalMinutes;
+  const msToNext = (minutesToWait * 60 - sec) * 1000 - ms;
+  setTimeout(() => {
+    fn();
+    setInterval(fn, intervalMinutes * 60 * 1000);
+  }, msToNext > 0 ? msToNext : 0);
+}
+
+startAlignedInterval(trackStars, INTERVAL_MINUTES); 

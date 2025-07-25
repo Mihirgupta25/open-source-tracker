@@ -42,8 +42,11 @@ function App() {
         if (Array.isArray(data)) {
           setStarHistory(data.map(d => ({
             ...d,
-            // Convert UTC timestamp to local time string (YYYY-MM-DD HH:mm)
-            timestamp: new Date(d.timestamp + 'Z').toLocaleString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+            // Format timestamp as 'Month Day, Year, HH:MM AM/PM' (e.g., 'July 25, 2025, 10:12 PM')
+            timestamp: new Date(d.timestamp + 'Z').toLocaleString(undefined, {
+              year: 'numeric', month: 'long', day: 'numeric',
+              hour: '2-digit', minute: '2-digit', hour12: true
+            })
           })));
         } else if (data && data.error) {
           setError('Failed to load star history: ' + data.error);
@@ -59,7 +62,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1>GitHub Star Growth Tracker</h1>
+      <h1>Open Source Growth Tracker</h1>
       <form onSubmit={fetchStars} style={{ marginBottom: 20 }}>
         <input
           type="text"
@@ -78,13 +81,30 @@ function App() {
         </div>
       )}
       {starHistory.length > 0 && (
-        <div style={{ width: '90%', maxWidth: 800, margin: '40px auto' }}>
-          <h2>Star Growth Over Time (promptfoo/promptfoo)</h2>
+        <div className="card">
+          <h2>Star Growth of Promptfoo</h2>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+            <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="timestamp" minTickGap={40} />
-              <YAxis />
+              <XAxis dataKey="timestamp" minTickGap={40}
+                label={{
+                  value: 'Time',
+                  position: 'insideBottom',
+                  dy: 20,
+                  style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
+                }}
+                tick={false}
+              />
+              {/* YAxis will now auto-expand to fit all data */}
+              <YAxis domain={['auto', 'auto']}
+                label={{
+                  value: 'Star Count',
+                  angle: 0,
+                  position: 'insideLeft',
+                  dy: -30,
+                  style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
+                }}
+              />
               <Tooltip />
               <Line type="monotone" dataKey="count" stroke="#8884d8" dot={false} />
             </LineChart>
