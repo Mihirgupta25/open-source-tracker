@@ -1,36 +1,44 @@
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const Database = require('better-sqlite3');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Set this in your .env file
+
+const dbPath = path.join(__dirname, 'star_growth.db');
+const starDb = new Database(dbPath);
 
 app.use(cors());
 
-// Fetch stargazer data for a repo (paginated)
 app.get('/api/stars', async (req, res) => {
   const { repo } = req.query; // e.g., facebook/react
   if (!repo) return res.status(400).json({ error: 'Missing repo parameter' });
 
   try {
-    // GitHub API: /repos/{owner}/{repo}/stargazers?per_page=100&page=1
-    // Accept header for star timestamps
-    let page = 1;
-    let stars = [];
-    let hasMore = true;
-    while (hasMore && page <= 10) { // Limit to 1000 for demo
-      const response = await axios.get(`https://api.github.com/repos/${repo}/stargazers`, {
-        params: { per_page: 100, page },
-        headers: { 'Accept': 'application/vnd.github.v3.star+json' },
-      });
-      if (response.data.length === 0) break;
-      stars = stars.concat(response.data);
-      hasMore = response.data.length === 100;
-      page++;
+    const headers = GITHUB_TOKEN
+      ? { Authorization: `token ${GITHUB_TOKEN}` }
+      : {};
+    const response = await axios.get(`https://api.github.com/repos/${repo}`, { headers });
+    const starCount = response.data.stargazers_count;
+    res.json({ count: starCount });
+  } catch (err) {
+    if (err.response) {
+      console.error('GitHub API error:', err.response.status, err.response.data);
+    } else {
+      console.error('GitHub API error:', err.message);
     }
-    // Map to {starred_at}
-    const starHistory = stars.map(s => s.starred_at);
-    res.json({ count: starHistory.length, starHistory });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/star-history', (req, res) => {
+  try {
+    const rows = starDb.prepare('SELECT timestamp, count FROM stars WHERE repo = ? ORDER BY timestamp ASC').all('promptfoo/promptfoo');
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
