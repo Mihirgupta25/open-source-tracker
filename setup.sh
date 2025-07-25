@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Install root dependencies (including concurrently)
+npm install
+
 # Install backend dependencies
 cd backend && npm install
 

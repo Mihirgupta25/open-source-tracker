@@ -77,6 +77,8 @@ Want to get the app running in under 1 minute? Follow these steps:
 
 **Alternative:** If you prefer manual control, use `npm start` after running `bash setup.sh`.
 
+**Troubleshooting:** If you get a "concurrently: command not found" error, run `npm install` in the root directory to install the required dependencies.
+
 ---
 
 ## Detailed Setup
