@@ -28,7 +28,31 @@ A modern web app to track GitHub repository traction metrics, including star gro
 
 ## Screenshots
 
-*(Add screenshots here for Star Growth, PR Velocity, and Real Time Statistics tabs)*
+### 📊 Promptfoo Tab - Repository Analytics Dashboard
+
+The main dashboard showing comprehensive metrics for the Promptfoo repository:
+
+![Promptfoo Dashboard](https://i.imgur.com/example1.png)
+
+**Features shown:**
+- **Star Growth Chart:** Tracks repository popularity over time (7,698 → 7,710 stars)
+- **Pull Request Velocity:** Shows merged vs open PR ratio trends
+- **Issue Health:** Displays closed vs open issue ratios
+- **Modern UI:** Clean card-based layout with responsive design
+
+### 🔍 Real Time Statistics Tab - Live Repository Lookup
+
+Instant access to any GitHub repository's current metrics:
+
+![Real Time Statistics](https://i.imgur.com/example2.png)
+
+**Features shown:**
+- **Live Star Count:** Fetch current star count for any repository
+- **URL Input:** Support for both `owner/repo` and full GitHub URLs
+- **Instant Results:** Real-time API integration with GitHub
+- **Clean Interface:** Minimalist design with clear call-to-action
+
+> **Note:** Screenshots show the optimized UI with reduced whitespace and improved content density for better user experience.
 
 ---
 
