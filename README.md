@@ -52,7 +52,34 @@ A modern web app to track GitHub repository traction metrics, including star gro
 
 ---
 
-## Setup
+## Quick Start
+
+Want to get the app running in under 1 minute? Follow these steps:
+
+1. **Clone and start:**
+   ```bash
+   git clone https://github.com/Mihirgupta25/open-source-tracker.git
+   cd open-source-tracker
+   ./start.sh
+   ```
+
+2. **Open your browser:**
+   - Go to `http://localhost:3000`
+   - That's it! The app automatically handles everything else
+
+**What you'll see:**
+- Star Growth graph for Promptfoo
+- Pull Request Velocity metrics  
+- Issue Health tracking
+- Real-time star count fetching
+
+> **Note:** For better performance, add a GitHub token to `backend/.env` (see detailed setup below).
+
+**Alternative:** If you prefer manual control, use `npm start` after running `bash setup.sh`.
+
+---
+
+## Detailed Setup
 
 ### Prerequisites
 - Node.js (v16+ recommended)
