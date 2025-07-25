@@ -15,6 +15,12 @@ const starDb = new Database(dbPath);
 const prVelocityDbPath = path.join(__dirname, 'databases', 'pr_velocity.db');
 const prVelocityDb = new Database(prVelocityDbPath);
 
+const issueHealthDbPath = path.join(__dirname, 'databases', 'issue_health.db');
+const issueHealthDb = new Database(issueHealthDbPath);
+
+const packageDownloadsDbPath = path.join(__dirname, 'databases', 'package_downloads.db');
+const packageDownloadsDb = new Database(packageDownloadsDbPath);
+
 app.use(cors());
 
 app.get('/api/stars', async (req, res) => {
@@ -63,11 +69,25 @@ app.get('/api/pr-velocity', (req, res) => {
 
 app.get('/api/issue-health', (req, res) => {
   try {
-    const rows = prVelocityDb.prepare(`
+    const rows = issueHealthDb.prepare(`
       SELECT rowid as rowid, date, ratio
       FROM issue_ratios
       WHERE repo = ?
       ORDER BY date ASC
+    `).all('promptfoo/promptfoo');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/package-downloads', (req, res) => {
+  try {
+    const rows = packageDownloadsDb.prepare(`
+      SELECT rowid as rowid, week_start, downloads
+      FROM package_downloads
+      WHERE repo = ?
+      ORDER BY week_start ASC
     `).all('promptfoo/promptfoo');
     res.json(rows);
   } catch (err) {

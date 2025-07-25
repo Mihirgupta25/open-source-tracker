@@ -11,6 +11,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('promptfoo');
   const [prVelocity, setPrVelocity] = useState([]);
   const [issueHealth, setIssueHealth] = useState([]);
+  const [packageDownloads, setPackageDownloads] = useState([]);
 
   function parseRepo(input) {
     const match = input.match(/github\.com\/(.+?\/[^\/?#]+)/);
@@ -142,12 +143,32 @@ function App() {
       }
       fetchIssueHealth();
     }
+
+    // Fetch package downloads data
+    async function fetchPackageDownloads() {
+      try {
+        const res = await fetch('http://localhost:4000/api/package-downloads');
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setPackageDownloads(data.map(d => ({
+            ...d,
+            week_start: d.week_start,
+            downloads: Number(d.downloads)
+          })));
+        } else {
+          setPackageDownloads([]);
+        }
+      } catch {
+        setPackageDownloads([]);
+      }
+    }
+    fetchPackageDownloads();
   }, [activeTab]);
 
   return (
     <div className="App">
       <h1>Open Source Growth Tracker</h1>
-      <div className="tabs" style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+      <div className="tabs">
         <button
           className={activeTab === 'promptfoo' ? 'tab-active' : 'tab'}
           onClick={() => setActiveTab('promptfoo')}
@@ -167,10 +188,10 @@ function App() {
           {starHistory.length > 0 && (
             <div className="card">
               <h2>Star Growth</h2>
-              <p style={{ fontSize: '1.1rem', color: '#3b3b5c', marginBottom: 18, textAlign: 'left' }}>
+              <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
                 This chart visualizes the growth in GitHub stars for the selected repository over time. Each point represents the total number of stars recorded at a specific time, allowing you to track the project's popularity and community interest.
               </p>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="timestamp"
@@ -203,12 +224,12 @@ function App() {
           {/* Pull Request Velocity Section */}
           <div className="card">
             <h2>Pull Request Velocity</h2>
-            <p style={{ fontSize: '1.1rem', color: '#3b3b5c', marginBottom: 18, textAlign: 'left' }}>
+            <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
               This chart visualizes the ratio of merged to open pull requests for the selected repository over time. Each point represents the ratio on a specific day, helping you understand the pace at which pull requests are being merged relative to those remaining open.
             </p>
 
             {prVelocity.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" 
@@ -247,7 +268,7 @@ function App() {
             </p>
 
             {issueHealth.length > 0 ? (
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={issueHealth} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" 
@@ -278,12 +299,51 @@ function App() {
               <p style={{ color: '#888', marginTop: 24 }}>No issue health data available.</p>
             )}
           </div>
+          {/* Package Downloads Section */}
+          <div className="card">
+            <h2>Package Downloads</h2>
+            <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
+              This chart visualizes the weekly package download counts for the selected repository over time. Each point represents the total number of downloads during a specific week, helping you track the project's adoption and usage trends.
+            </p>
+
+            {packageDownloads.length > 0 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={packageDownloads} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="week_start" 
+                    tickFormatter={date => {
+                      try {
+                        const d = new Date(date + 'T12:00:00Z');
+                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                      } catch (e) {
+                        return date;
+                      }
+                    }}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    labelFormatter={date => {
+                      try {
+                        const d = new Date(date + 'T12:00:00Z');
+                        return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
+                      } catch (e) {
+                        return date;
+                      }
+                    }}
+                  />
+                  <Line type="monotone" dataKey="downloads" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 6, fill: "#8b5cf6" }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p style={{ color: '#888', marginTop: 24 }}>No package download data available.</p>
+            )}
+          </div>
         </>
       )}
       {activeTab === 'realtime' && (
         <div className="card">
           <h2>Real Time Statistics</h2>
-          <p style={{ fontSize: '1.1rem', color: '#3b3b5c', marginBottom: 24, textAlign: 'left' }}>
+                      <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 16, textAlign: 'left' }}>
             Retrieve real-time statistics for any GitHub repository. Simply enter the repository URL below to instantly view the latest star count and other key metrics.
           </p>
           <h3 style={{ color: '#6366f1', fontWeight: 700, marginBottom: 16 }}>Star Count</h3>
