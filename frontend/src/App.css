@@ -96,3 +96,37 @@ p {
 #root {
   margin: 0;
 }
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.tab {
+  background: #f1f5ff;
+  color: #6366f1;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.04);
+}
+
+.tab-active {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 8px;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.10);
+  z-index: 2;
+}
