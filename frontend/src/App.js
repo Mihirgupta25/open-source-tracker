@@ -71,7 +71,8 @@ function App() {
           if (Array.isArray(data)) {
             setPrVelocity(data.map(d => ({
               ...d,
-              date: new Date(d.date + 'T00:00:00Z').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+              // Keep date as raw YYYY-MM-DD string for XAxis
+              date: d.date,
               ratio: d.ratio !== undefined ? Number(d.ratio) : (d.average_duration_hours !== undefined ? Number(d.average_duration_hours) : 0)
             })));
           } else {
@@ -108,6 +109,9 @@ function App() {
           {starHistory.length > 0 && (
             <div className="card">
               <h2>Star Growth</h2>
+              <p style={{ fontSize: '1.1rem', color: '#3b3b5c', marginBottom: 18, textAlign: 'left' }}>
+                This chart visualizes the growth in GitHub stars for the selected repository over time. Each point represents the total number of stars recorded at a specific time, allowing you to track the project's popularity and community interest.
+              </p>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -141,6 +145,9 @@ function App() {
           {/* Pull Request Velocity Section */}
           <div className="card">
             <h2>Pull Request Velocity</h2>
+            <p style={{ fontSize: '1.1rem', color: '#3b3b5c', marginBottom: 18, textAlign: 'left' }}>
+              This chart visualizes the ratio of merged to open pull requests for the selected repository over time. Each point represents the ratio on a specific day, helping you understand the pace at which pull requests are being merged relative to those remaining open.
+            </p>
             {prVelocity.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 80, bottom: 40 }}>
@@ -151,6 +158,10 @@ function App() {
                       position: 'insideBottom',
                       dy: 20,
                       style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
+                    }}
+                    tickFormatter={date => {
+                      const d = new Date(date + 'T00:00:00Z');
+                      return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' });
                     }}
                   />
                   <YAxis />
