@@ -5,3 +5,15 @@
 [2025-07-25T07:50:00.361Z] Inserted star count: 7700
 [2025-07-25T08:00:00.371Z] Inserted star count: 7700
 [2025-07-25T08:10:00.315Z] Inserted star count: 7700
+
+/Users/mihirgupta/coding/open-source-tracker/backend/star_tracker.js:35
+    db.prepare('INSERT INTO stars (repo, count) VALUES (?, ?)').run(REPO, count);
+                                                                ^
+SqliteError: attempt to write a readonly database
+    at Timeout.trackStars [as _onTimeout] (/Users/mihirgupta/coding/open-source-tracker/backend/star_tracker.js:35:65)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 'SQLITE_READONLY_DBMOVED'
+}
+
+Node.js v24.4.1
+[dotenv@17.2.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com

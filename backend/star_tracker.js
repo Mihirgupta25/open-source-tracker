@@ -5,10 +5,10 @@ const path = require('path');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO = 'promptfoo/promptfoo';
-const INTERVAL_MINUTES = 10;
+const INTERVAL_MINUTES = 60; // Collect data every hour
 
 // Setup SQLite DB
-const dbPath = path.join(__dirname, 'star_growth.db');
+const dbPath = path.join(__dirname, 'databases', 'star_growth.db');
 const db = new Database(dbPath);
 db.exec(`CREATE TABLE IF NOT EXISTS stars (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,19 +37,25 @@ async function trackStars() {
   }
 }
 
-// Run immediately, then every 10 minutes at multiples of 10 past the hour
-function startAlignedInterval(fn, intervalMinutes) {
+// Helper to get delay until next 2:00 AM PST
+function getDelayUntilNext2AMPST() {
   const now = new Date();
-  const ms = now.getMilliseconds();
-  const sec = now.getSeconds();
-  const min = now.getMinutes();
-  const nextMultiple = Math.ceil(min / intervalMinutes) * intervalMinutes;
-  const minutesToWait = (nextMultiple - min) % intervalMinutes;
-  const msToNext = (minutesToWait * 60 - sec) * 1000 - ms;
+  // PST is UTC-8 (no DST handling for simplicity)
+  const nowUTC = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+  let next2AM = new Date(nowUTC);
+  next2AM.setUTCHours(10, 0, 0, 0); // 2:00 AM PST = 10:00 UTC
+  if (nowUTC >= next2AM) {
+    next2AM.setUTCDate(next2AM.getUTCDate() + 1);
+  }
+  return next2AM - nowUTC;
+}
+
+function startPSTAlignedInterval(fn, intervalMinutes) {
+  const delay = getDelayUntilNext2AMPST();
   setTimeout(() => {
     fn();
     setInterval(fn, intervalMinutes * 60 * 1000);
-  }, msToNext > 0 ? msToNext : 0);
+  }, delay);
 }
 
-startAlignedInterval(trackStars, INTERVAL_MINUTES); 
+startPSTAlignedInterval(trackStars, INTERVAL_MINUTES); 

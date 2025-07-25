@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 function App() {
   const [repo, setRepo] = useState('');
@@ -9,6 +9,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('promptfoo');
+  const [prVelocity, setPrVelocity] = useState([]);
 
   function parseRepo(input) {
     const match = input.match(/github\.com\/(.+?\/[^\/?#]+)/);
@@ -61,6 +62,29 @@ function App() {
     fetchHistory();
   }, []);
 
+  useEffect(() => {
+    if (activeTab === 'promptfoo') {
+      async function fetchPrVelocity() {
+        try {
+          const res = await fetch('http://localhost:4000/api/pr-velocity');
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setPrVelocity(data.map(d => ({
+              ...d,
+              date: new Date(d.date + 'T00:00:00Z').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }),
+              ratio: d.ratio !== undefined ? Number(d.ratio) : (d.average_duration_hours !== undefined ? Number(d.average_duration_hours) : 0)
+            })));
+          } else {
+            setPrVelocity([]);
+          }
+        } catch {
+          setPrVelocity([]);
+        }
+      }
+      fetchPrVelocity();
+    }
+  }, [activeTab]);
+
   return (
     <div className="App">
       <h1>Open Source Growth Tracker</h1>
@@ -83,34 +107,61 @@ function App() {
         <>
           {starHistory.length > 0 && (
             <div className="card">
-              <h2>Star Growth of Promptfoo</h2>
+              <h2>Star Growth</h2>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp" minTickGap={40}
+                  <XAxis dataKey="timestamp"
                     label={{
                       value: 'Time',
                       position: 'insideBottom',
                       dy: 20,
                       style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
                     }}
-                    tick={false}
                   />
-                  <YAxis domain={['auto', 'auto']}
-                    label={{
-                      value: 'Star Count',
-                      angle: 0,
-                      position: 'insideLeft',
-                      dy: -30,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
-                  />
+                  <YAxis domain={['auto', 'auto']} />
+                  {/* Add ReferenceLine for each day change */}
+                  {starHistory.length > 1 && starHistory.map((point, idx, arr) => {
+                    if (idx === 0) return null;
+                    const prevDate = new Date(arr[idx - 1].timestamp).toDateString();
+                    const currDate = new Date(point.timestamp).toDateString();
+                    if (prevDate !== currDate) {
+                      return (
+                        <ReferenceLine key={point.timestamp} x={point.timestamp} stroke="#f59e42" strokeDasharray="4 2" label={{ value: currDate, position: 'top', fill: '#f59e42', fontSize: 12, fontWeight: 600 }} />
+                      );
+                    }
+                    return null;
+                  })}
                   <Tooltip />
                   <Line type="monotone" dataKey="count" stroke="#8884d8" dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           )}
+          {/* Pull Request Velocity Section */}
+          <div className="card">
+            <h2>Pull Request Velocity</h2>
+            {prVelocity.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 80, bottom: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date"
+                    label={{
+                      value: 'Date',
+                      position: 'insideBottom',
+                      dy: 20,
+                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
+                    }}
+                  />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="ratio" stroke="#f59e42" dot={true} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p style={{ color: '#888', marginTop: 24 }}>No pull request velocity data available.</p>
+            )}
+          </div>
         </>
       )}
       {activeTab === 'realtime' && (

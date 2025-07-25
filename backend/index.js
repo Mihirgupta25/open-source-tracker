@@ -9,8 +9,11 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Set this in your .env file
 
-const dbPath = path.join(__dirname, 'star_growth.db');
+const dbPath = path.join(__dirname, 'databases', 'star_growth.db');
 const starDb = new Database(dbPath);
+
+const prVelocityDbPath = path.join(__dirname, 'databases', 'pr_velocity.db');
+const prVelocityDb = new Database(prVelocityDbPath);
 
 app.use(cors());
 
@@ -38,6 +41,20 @@ app.get('/api/stars', async (req, res) => {
 app.get('/api/star-history', (req, res) => {
   try {
     const rows = starDb.prepare('SELECT timestamp, count FROM stars WHERE repo = ? ORDER BY timestamp ASC').all('promptfoo/promptfoo');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/pr-velocity', (req, res) => {
+  try {
+    const rows = prVelocityDb.prepare(`
+      SELECT date, ratio as average_duration_hours
+      FROM pr_ratios
+      WHERE repo = ? AND date >= date('now', '-7 days')
+      ORDER BY date ASC
+    `).all('promptfoo/promptfoo');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
