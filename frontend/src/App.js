@@ -192,7 +192,7 @@ function App() {
                 This chart visualizes the growth in GitHub stars for the selected repository over time. Each point represents the total number of stars recorded at a specific time, allowing you to track the project's popularity and community interest.
               </p>
               <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 40, bottom: 40 }}>
+                <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="timestamp"
                     label={{
@@ -206,7 +206,8 @@ function App() {
                     label={{
                       value: 'Stars',
                       position: 'insideLeft',
-                      dy: -10,
+                      dy: -20,
+                      dx: -15,
                       style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
                     }}
                   />
