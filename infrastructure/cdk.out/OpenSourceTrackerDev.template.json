@@ -1,0 +1,1904 @@
+{
+ "Description": "Open Source Tracker dev environment",
+ "Resources": {
+  "StarGrowthTable3553166B": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "repo",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "timestamp",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "repo",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "timestamp",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "dev-star-growth"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/StarGrowthTable/Resource"
+   }
+  },
+  "PRVelocityTable26DC47B7": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "repo",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "date",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "repo",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "date",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "dev-pr-velocity"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PRVelocityTable/Resource"
+   }
+  },
+  "IssueHealthTable153F1872": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "repo",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "date",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "repo",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "date",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "dev-issue-health"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/IssueHealthTable/Resource"
+   }
+  },
+  "PackageDownloadsTable05C0DD59": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "repo",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "week_start",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "repo",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "week_start",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "dev-package-downloads"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PackageDownloadsTable/Resource"
+   }
+  },
+  "GitHubTokenSecret09BC4210": {
+   "Type": "AWS::SecretsManager::Secret",
+   "Properties": {
+    "Description": "GitHub API token for dev environment",
+    "GenerateSecretString": {
+     "ExcludeCharacters": "\"@/\\",
+     "GenerateStringKey": "token",
+     "SecretStringTemplate": "{\"token\":\"\"}"
+    },
+    "Name": "github-token-dev"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/GitHubTokenSecret/Resource"
+   }
+  },
+  "SharedLayer27DFABF0": {
+   "Type": "AWS::Lambda::LayerVersion",
+   "Properties": {
+    "CompatibleRuntimes": [
+     "nodejs18.x"
+    ],
+    "Content": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "05c85b61a4066f3782b1e0de3870283a9f9d80198649bdef34ee2fde843bb022.zip"
+    },
+    "Description": "Shared dependencies for Open Source Tracker Lambda functions",
+    "LayerName": "dev-shared-layer"
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/SharedLayer/Resource",
+    "aws:asset:path": "asset.05c85b61a4066f3782b1e0de3870283a9f9d80198649bdef34ee2fde843bb022",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Content"
+   }
+  },
+  "APIFunctionServiceRole411B6D35": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/APIFunction/ServiceRole/Resource"
+   }
+  },
+  "APIFunctionServiceRoleDefaultPolicy55C0651E": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:GetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:PutItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "IssueHealthTable153F1872",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "PRVelocityTable26DC47B7",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "PackageDownloadsTable05C0DD59",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::GetAtt": [
+          "StarGrowthTable3553166B",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "GitHubTokenSecret09BC4210"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "APIFunctionServiceRoleDefaultPolicy55C0651E",
+    "Roles": [
+     {
+      "Ref": "APIFunctionServiceRole411B6D35"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/APIFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "APIFunction49CD189B": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "8e50eb3b441b1c1ecfedeacef7347505132e8db097d186ff178c014375d90bd7.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ENVIRONMENT": "dev",
+      "STAR_GROWTH_TABLE": {
+       "Ref": "StarGrowthTable3553166B"
+      },
+      "PR_VELOCITY_TABLE": {
+       "Ref": "PRVelocityTable26DC47B7"
+      },
+      "ISSUE_HEALTH_TABLE": {
+       "Ref": "IssueHealthTable153F1872"
+      },
+      "PACKAGE_DOWNLOADS_TABLE": {
+       "Ref": "PackageDownloadsTable05C0DD59"
+      },
+      "GITHUB_TOKEN_SECRET_NAME": "github-token-dev"
+     }
+    },
+    "Handler": "lambda-index.handler",
+    "Layers": [
+     {
+      "Ref": "SharedLayer27DFABF0"
+     }
+    ],
+    "MemorySize": 512,
+    "Role": {
+     "Fn::GetAtt": [
+      "APIFunctionServiceRole411B6D35",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "APIFunctionServiceRoleDefaultPolicy55C0651E",
+    "APIFunctionServiceRole411B6D35"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/APIFunction/Resource",
+    "aws:asset:path": "asset.8e50eb3b441b1c1ecfedeacef7347505132e8db097d186ff178c014375d90bd7",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "APIFunctionLogRetentionE8A704D9": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "APIFunction49CD189B"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/APIFunction/LogRetention/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "logs:DeleteRetentionPolicy",
+        "logs:PutRetentionPolicy"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "Roles": [
+     {
+      "Ref": "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Handler": "index.handler",
+    "Runtime": "nodejs22.x",
+    "Timeout": 900,
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d.zip"
+    },
+    "Role": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB",
+      "Arn"
+     ]
+    }
+   },
+   "DependsOn": [
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRoleDefaultPolicyADDA7DEB",
+    "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aServiceRole9741ECFB"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8a/Resource",
+    "aws:asset:path": "asset.2819175352ad1ce0dae768e83fc328fb70fb5f10b4a8ff0ccbcb791f02b0716d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StarGrowthCollectorServiceRole03D488D2": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/StarGrowthCollector/ServiceRole/Resource"
+   }
+  },
+  "StarGrowthCollectorServiceRoleDefaultPolicy3358AF87": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "StarGrowthTable3553166B",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "GitHubTokenSecret09BC4210"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "StarGrowthCollectorServiceRoleDefaultPolicy3358AF87",
+    "Roles": [
+     {
+      "Ref": "StarGrowthCollectorServiceRole03D488D2"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/StarGrowthCollector/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "StarGrowthCollectorF1B47D4F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "8c4bb475c809d1e356116b4cd2d8af32510b0d8afdb0c76782f72d6b84c478c8.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ENVIRONMENT": "dev",
+      "STAR_GROWTH_TABLE": {
+       "Ref": "StarGrowthTable3553166B"
+      },
+      "GITHUB_TOKEN_SECRET_NAME": "github-token-dev",
+      "REPO": "promptfoo/promptfoo"
+     }
+    },
+    "Handler": "star-collector.handler",
+    "Layers": [
+     {
+      "Ref": "SharedLayer27DFABF0"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "StarGrowthCollectorServiceRole03D488D2",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "StarGrowthCollectorServiceRoleDefaultPolicy3358AF87",
+    "StarGrowthCollectorServiceRole03D488D2"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/StarGrowthCollector/Resource",
+    "aws:asset:path": "asset.8c4bb475c809d1e356116b4cd2d8af32510b0d8afdb0c76782f72d6b84c478c8",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "StarGrowthCollectorLogRetentionA09D3D55": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "StarGrowthCollectorF1B47D4F"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/StarGrowthCollector/LogRetention/Resource"
+   }
+  },
+  "PRVelocityCollectorServiceRole84A83AA0": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PRVelocityCollector/ServiceRole/Resource"
+   }
+  },
+  "PRVelocityCollectorServiceRoleDefaultPolicy9FFCA379": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "PRVelocityTable26DC47B7",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "GitHubTokenSecret09BC4210"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "PRVelocityCollectorServiceRoleDefaultPolicy9FFCA379",
+    "Roles": [
+     {
+      "Ref": "PRVelocityCollectorServiceRole84A83AA0"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PRVelocityCollector/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "PRVelocityCollector0676E3C7": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "8c4bb475c809d1e356116b4cd2d8af32510b0d8afdb0c76782f72d6b84c478c8.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ENVIRONMENT": "dev",
+      "PR_VELOCITY_TABLE": {
+       "Ref": "PRVelocityTable26DC47B7"
+      },
+      "GITHUB_TOKEN_SECRET_NAME": "github-token-dev",
+      "REPO": "promptfoo/promptfoo"
+     }
+    },
+    "Handler": "pr-collector.handler",
+    "Layers": [
+     {
+      "Ref": "SharedLayer27DFABF0"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "PRVelocityCollectorServiceRole84A83AA0",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "PRVelocityCollectorServiceRoleDefaultPolicy9FFCA379",
+    "PRVelocityCollectorServiceRole84A83AA0"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PRVelocityCollector/Resource",
+    "aws:asset:path": "asset.8c4bb475c809d1e356116b4cd2d8af32510b0d8afdb0c76782f72d6b84c478c8",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "PRVelocityCollectorLogRetentionAF6ED226": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "PRVelocityCollector0676E3C7"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PRVelocityCollector/LogRetention/Resource"
+   }
+  },
+  "IssueHealthCollectorServiceRole15D02BD9": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/IssueHealthCollector/ServiceRole/Resource"
+   }
+  },
+  "IssueHealthCollectorServiceRoleDefaultPolicyCD0DE5E6": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "IssueHealthTable153F1872",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "GitHubTokenSecret09BC4210"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "IssueHealthCollectorServiceRoleDefaultPolicyCD0DE5E6",
+    "Roles": [
+     {
+      "Ref": "IssueHealthCollectorServiceRole15D02BD9"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/IssueHealthCollector/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "IssueHealthCollectorB9ED6A3F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "8c4bb475c809d1e356116b4cd2d8af32510b0d8afdb0c76782f72d6b84c478c8.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ENVIRONMENT": "dev",
+      "ISSUE_HEALTH_TABLE": {
+       "Ref": "IssueHealthTable153F1872"
+      },
+      "GITHUB_TOKEN_SECRET_NAME": "github-token-dev",
+      "REPO": "promptfoo/promptfoo"
+     }
+    },
+    "Handler": "issue-collector.handler",
+    "Layers": [
+     {
+      "Ref": "SharedLayer27DFABF0"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "IssueHealthCollectorServiceRole15D02BD9",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "IssueHealthCollectorServiceRoleDefaultPolicyCD0DE5E6",
+    "IssueHealthCollectorServiceRole15D02BD9"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/IssueHealthCollector/Resource",
+    "aws:asset:path": "asset.8c4bb475c809d1e356116b4cd2d8af32510b0d8afdb0c76782f72d6b84c478c8",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "IssueHealthCollectorLogRetentionA9F1AF78": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "IssueHealthCollectorB9ED6A3F"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/IssueHealthCollector/LogRetention/Resource"
+   }
+  },
+  "PackageDownloadsCollectorServiceRole29C780A2": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PackageDownloadsCollector/ServiceRole/Resource"
+   }
+  },
+  "PackageDownloadsCollectorServiceRoleDefaultPolicyA146EEE5": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchWriteItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "PackageDownloadsTable05C0DD59",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:GetSecretValue"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Ref": "GitHubTokenSecret09BC4210"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "PackageDownloadsCollectorServiceRoleDefaultPolicyA146EEE5",
+    "Roles": [
+     {
+      "Ref": "PackageDownloadsCollectorServiceRole29C780A2"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PackageDownloadsCollector/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "PackageDownloadsCollectorF1B88666": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "8c4bb475c809d1e356116b4cd2d8af32510b0d8afdb0c76782f72d6b84c478c8.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ENVIRONMENT": "dev",
+      "PACKAGE_DOWNLOADS_TABLE": {
+       "Ref": "PackageDownloadsTable05C0DD59"
+      },
+      "GITHUB_TOKEN_SECRET_NAME": "github-token-dev",
+      "REPO": "promptfoo/promptfoo"
+     }
+    },
+    "Handler": "package-collector.handler",
+    "Layers": [
+     {
+      "Ref": "SharedLayer27DFABF0"
+     }
+    ],
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "PackageDownloadsCollectorServiceRole29C780A2",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "PackageDownloadsCollectorServiceRoleDefaultPolicyA146EEE5",
+    "PackageDownloadsCollectorServiceRole29C780A2"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PackageDownloadsCollector/Resource",
+    "aws:asset:path": "asset.8c4bb475c809d1e356116b4cd2d8af32510b0d8afdb0c76782f72d6b84c478c8",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "PackageDownloadsCollectorLogRetention8B9A8612": {
+   "Type": "Custom::LogRetention",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "LogRetentionaae0aa3c5b4d4f87b02d85b201efdd8aFD4BFC8A",
+      "Arn"
+     ]
+    },
+    "LogGroupName": {
+     "Fn::Join": [
+      "",
+      [
+       "/aws/lambda/",
+       {
+        "Ref": "PackageDownloadsCollectorF1B88666"
+       }
+      ]
+     ]
+    },
+    "RetentionInDays": 7
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/PackageDownloadsCollector/LogRetention/Resource"
+   }
+  },
+  "DataCollectionRuleA1BEEAB2": {
+   "Type": "AWS::Events::Rule",
+   "Properties": {
+    "Description": "Daily data collection for dev environment",
+    "ScheduleExpression": "cron(0 12 * * ? *)",
+    "State": "ENABLED",
+    "Targets": [
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "StarGrowthCollectorF1B47D4F",
+        "Arn"
+       ]
+      },
+      "Id": "Target0"
+     },
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "PRVelocityCollector0676E3C7",
+        "Arn"
+       ]
+      },
+      "Id": "Target1"
+     },
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "IssueHealthCollectorB9ED6A3F",
+        "Arn"
+       ]
+      },
+      "Id": "Target2"
+     },
+     {
+      "Arn": {
+       "Fn::GetAtt": [
+        "PackageDownloadsCollectorF1B88666",
+        "Arn"
+       ]
+      },
+      "Id": "Target3"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/DataCollectionRule/Resource"
+   }
+  },
+  "DataCollectionRuleAllowEventRuleOpenSourceTrackerDevStarGrowthCollectorA84D60B0E88FA1D1": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "StarGrowthCollectorF1B47D4F",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "DataCollectionRuleA1BEEAB2",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/DataCollectionRule/AllowEventRuleOpenSourceTrackerDevStarGrowthCollectorA84D60B0"
+   }
+  },
+  "DataCollectionRuleAllowEventRuleOpenSourceTrackerDevPRVelocityCollector93CCB148EA2152F5": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "PRVelocityCollector0676E3C7",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "DataCollectionRuleA1BEEAB2",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/DataCollectionRule/AllowEventRuleOpenSourceTrackerDevPRVelocityCollector93CCB148"
+   }
+  },
+  "DataCollectionRuleAllowEventRuleOpenSourceTrackerDevIssueHealthCollector77C14DDF85AC0907": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "IssueHealthCollectorB9ED6A3F",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "DataCollectionRuleA1BEEAB2",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/DataCollectionRule/AllowEventRuleOpenSourceTrackerDevIssueHealthCollector77C14DDF"
+   }
+  },
+  "DataCollectionRuleAllowEventRuleOpenSourceTrackerDevPackageDownloadsCollector438616E6798A33C4": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "PackageDownloadsCollectorF1B88666",
+      "Arn"
+     ]
+    },
+    "Principal": "events.amazonaws.com",
+    "SourceArn": {
+     "Fn::GetAtt": [
+      "DataCollectionRuleA1BEEAB2",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/DataCollectionRule/AllowEventRuleOpenSourceTrackerDevPackageDownloadsCollector438616E6"
+   }
+  },
+  "OpenSourceTrackerAPI0218CD5F": {
+   "Type": "AWS::ApiGateway::RestApi",
+   "Properties": {
+    "Description": "API for Open Source Tracker dev environment",
+    "Name": "dev-open-source-tracker-api"
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Resource"
+   }
+  },
+  "OpenSourceTrackerAPIDeployment12C4159Ab5b5f021f726c0d82a11303cbeff596b": {
+   "Type": "AWS::ApiGateway::Deployment",
+   "Properties": {
+    "Description": "API for Open Source Tracker dev environment",
+    "RestApiId": {
+     "Ref": "OpenSourceTrackerAPI0218CD5F"
+    }
+   },
+   "DependsOn": [
+    "OpenSourceTrackerAPIproxyANY695396EE",
+    "OpenSourceTrackerAPIproxyOPTIONS1F725FA5",
+    "OpenSourceTrackerAPIproxyE1B2C5F7",
+    "OpenSourceTrackerAPIANY7A627425",
+    "OpenSourceTrackerAPIOPTIONS16E54452"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Deployment/Resource",
+    "aws:cdk:do-not-refactor": true
+   }
+  },
+  "OpenSourceTrackerAPIDeploymentStageprod02AA1190": {
+   "Type": "AWS::ApiGateway::Stage",
+   "Properties": {
+    "DeploymentId": {
+     "Ref": "OpenSourceTrackerAPIDeployment12C4159Ab5b5f021f726c0d82a11303cbeff596b"
+    },
+    "RestApiId": {
+     "Ref": "OpenSourceTrackerAPI0218CD5F"
+    },
+    "StageName": "prod"
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/DeploymentStage.prod/Resource"
+   }
+  },
+  "OpenSourceTrackerAPIOPTIONS16E54452": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "OpenSourceTrackerAPI0218CD5F",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "OpenSourceTrackerAPI0218CD5F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Default/OPTIONS/Resource"
+   }
+  },
+  "OpenSourceTrackerAPIproxyE1B2C5F7": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "OpenSourceTrackerAPI0218CD5F",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "{proxy+}",
+    "RestApiId": {
+     "Ref": "OpenSourceTrackerAPI0218CD5F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Default/{proxy+}/Resource"
+   }
+  },
+  "OpenSourceTrackerAPIproxyOPTIONS1F725FA5": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "ApiKeyRequired": false,
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'OPTIONS,GET,PUT,POST,DELETE,PATCH,HEAD'"
+       },
+       "StatusCode": "204"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{ statusCode: 200 }"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "204"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "OpenSourceTrackerAPIproxyE1B2C5F7"
+    },
+    "RestApiId": {
+     "Ref": "OpenSourceTrackerAPI0218CD5F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Default/{proxy+}/OPTIONS/Resource"
+   }
+  },
+  "OpenSourceTrackerAPIproxyANYApiPermissionOpenSourceTrackerDevOpenSourceTrackerAPI8F3D0A69ANYproxyA416BCDA": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "APIFunction49CD189B",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:071493677444:",
+       {
+        "Ref": "OpenSourceTrackerAPI0218CD5F"
+       },
+       "/",
+       {
+        "Ref": "OpenSourceTrackerAPIDeploymentStageprod02AA1190"
+       },
+       "/*/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Default/{proxy+}/ANY/ApiPermission.OpenSourceTrackerDevOpenSourceTrackerAPI8F3D0A69.ANY..{proxy+}"
+   }
+  },
+  "OpenSourceTrackerAPIproxyANYApiPermissionTestOpenSourceTrackerDevOpenSourceTrackerAPI8F3D0A69ANYproxyBC518E56": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "APIFunction49CD189B",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:aws:execute-api:us-east-1:071493677444:",
+       {
+        "Ref": "OpenSourceTrackerAPI0218CD5F"
+       },
+       "/test-invoke-stage/*/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Default/{proxy+}/ANY/ApiPermission.Test.OpenSourceTrackerDevOpenSourceTrackerAPI8F3D0A69.ANY..{proxy+}"
+   }
+  },
+  "OpenSourceTrackerAPIproxyANY695396EE": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "ANY",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "APIFunction49CD189B",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "OpenSourceTrackerAPIproxyE1B2C5F7"
+    },
+    "RestApiId": {
+     "Ref": "OpenSourceTrackerAPI0218CD5F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Default/{proxy+}/ANY/Resource"
+   }
+  },
+  "OpenSourceTrackerAPIANY7A627425": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "ANY",
+    "Integration": {
+     "Type": "MOCK"
+    },
+    "ResourceId": {
+     "Fn::GetAtt": [
+      "OpenSourceTrackerAPI0218CD5F",
+      "RootResourceId"
+     ]
+    },
+    "RestApiId": {
+     "Ref": "OpenSourceTrackerAPI0218CD5F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/OpenSourceTrackerAPI/Default/ANY/Resource"
+   }
+  },
+  "FrontendBucketEFE2E19C": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "BucketName": "dev-open-source-tracker-frontend-071493677444",
+    "PublicAccessBlockConfiguration": {
+     "BlockPublicAcls": true,
+     "IgnorePublicAcls": true
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ],
+    "WebsiteConfiguration": {
+     "ErrorDocument": "index.html",
+     "IndexDocument": "index.html"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/FrontendBucket/Resource"
+   }
+  },
+  "FrontendBucketPolicy1DFF75D9": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "FrontendBucketEFE2E19C"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:GetObject",
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": "*"
+       },
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "FrontendBucketEFE2E19C",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:PutBucketPolicy"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "FrontendBucketEFE2E19C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "FrontendBucketEFE2E19C",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/FrontendBucket/Policy/Resource"
+   }
+  },
+  "FrontendBucketAutoDeleteObjectsCustomResourceDB860B32": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "FrontendBucketEFE2E19C"
+    }
+   },
+   "DependsOn": [
+    "FrontendBucketPolicy1DFF75D9"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/FrontendBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "FrontendBucketEFE2E19C"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
+   }
+  },
+  "FrontendDistributionE6EAF405": {
+   "Type": "AWS::CloudFront::Distribution",
+   "Properties": {
+    "DistributionConfig": {
+     "CustomErrorResponses": [
+      {
+       "ErrorCode": 404,
+       "ResponseCode": 200,
+       "ResponsePagePath": "/index.html"
+      }
+     ],
+     "DefaultCacheBehavior": {
+      "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+      "Compress": true,
+      "TargetOriginId": "OpenSourceTrackerDevFrontendDistributionOrigin1D7B9C38A",
+      "ViewerProtocolPolicy": "redirect-to-https"
+     },
+     "Enabled": true,
+     "HttpVersion": "http2",
+     "IPV6Enabled": true,
+     "Origins": [
+      {
+       "CustomOriginConfig": {
+        "OriginProtocolPolicy": "http-only",
+        "OriginSSLProtocols": [
+         "TLSv1.2"
+        ]
+       },
+       "DomainName": {
+        "Fn::Select": [
+         2,
+         {
+          "Fn::Split": [
+           "/",
+           {
+            "Fn::GetAtt": [
+             "FrontendBucketEFE2E19C",
+             "WebsiteURL"
+            ]
+           }
+          ]
+         }
+        ]
+       },
+       "Id": "OpenSourceTrackerDevFrontendDistributionOrigin1D7B9C38A"
+      }
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/FrontendDistribution/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1VQy27CMBD8Fu7GpRSpZyjqiaqIVr0ix16CIbYjrw2Novx7104o4bQzO7PPOZ/PXvlsIq44leo8rXTB268g5JlRat+qxgrjFCW/RVEBezvYDDqGID0ENMKKEjwVZZ4MPepYJUyhBG83ogH/Ax61s0l/4O/RyjAIY7wFbzQmC4162QtEGsaXKRDn7SrKM4SVQGA9TEUD6sPWVVo293TPO6aF4e3O9cfkeHfePJUrkW9cuYMANq8EFwJIhXEojOkJotalCHAVDSmAYVnrLA5wDXXlGkOVKTti9OEyt+kB+V30EvI5HxCOTiVxQFvvfpubZWifccdk5aI6eGcDb9cag9dFvH1wzLvufwbLP0xztS3H3RL+jKGOtGzE4MxdeKC0zkUr8GnZjlmngJ/w6TJf8AV/npxQ66mP9DQDfNfHP5rOsf1lAgAA"
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "OpenSourceTrackerAPIEndpoint7E7781F1": {
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "OpenSourceTrackerAPI0218CD5F"
+      },
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "OpenSourceTrackerAPIDeploymentStageprod02AA1190"
+      },
+      "/"
+     ]
+    ]
+   }
+  },
+  "APIEndpoint": {
+   "Description": "API Gateway endpoint URL",
+   "Value": {
+    "Fn::Join": [
+     "",
+     [
+      "https://",
+      {
+       "Ref": "OpenSourceTrackerAPI0218CD5F"
+      },
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "OpenSourceTrackerAPIDeploymentStageprod02AA1190"
+      },
+      "/"
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "dev-api-endpoint"
+   }
+  },
+  "FrontendURL": {
+   "Description": "CloudFront distribution URL",
+   "Value": {
+    "Fn::GetAtt": [
+     "FrontendDistributionE6EAF405",
+     "DomainName"
+    ]
+   },
+   "Export": {
+    "Name": "dev-frontend-url"
+   }
+  },
+  "FrontendBucketName": {
+   "Description": "S3 bucket name for frontend",
+   "Value": {
+    "Ref": "FrontendBucketEFE2E19C"
+   },
+   "Export": {
+    "Name": "dev-frontend-bucket"
+   }
+  },
+  "GitHubTokenSecretName": {
+   "Description": "GitHub token secret name",
+   "Value": {
+    "Fn::Join": [
+     "-",
+     [
+      {
+       "Fn::Select": [
+        0,
+        {
+         "Fn::Split": [
+          "-",
+          {
+           "Fn::Select": [
+            6,
+            {
+             "Fn::Split": [
+              ":",
+              {
+               "Ref": "GitHubTokenSecret09BC4210"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "Fn::Select": [
+        1,
+        {
+         "Fn::Split": [
+          "-",
+          {
+           "Fn::Select": [
+            6,
+            {
+             "Fn::Split": [
+              ":",
+              {
+               "Ref": "GitHubTokenSecret09BC4210"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      },
+      {
+       "Fn::Select": [
+        2,
+        {
+         "Fn::Split": [
+          "-",
+          {
+           "Fn::Select": [
+            6,
+            {
+             "Fn::Split": [
+              ":",
+              {
+               "Ref": "GitHubTokenSecret09BC4210"
+              }
+             ]
+            }
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    ]
+   },
+   "Export": {
+    "Name": "dev-github-token-secret"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

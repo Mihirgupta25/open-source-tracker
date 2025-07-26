@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from 'recharts';
 
+// API base URL - will use environment variable in production
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod';
+
 function App() {
   const [repo, setRepo] = useState('');
   const [starData, setStarData] = useState(null);
@@ -26,7 +29,7 @@ function App() {
     setStarData(null);
     try {
       const repoParam = parseRepo(repo);
-      const res = await fetch(`http://localhost:4000/api/stars?repo=${repoParam}`);
+      const res = await fetch(`${API_BASE_URL}/api/stars?repo=${repoParam}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setStarData(data);
@@ -41,7 +44,7 @@ function App() {
   useEffect(() => {
     async function fetchHistory() {
       try {
-        const res = await fetch('http://localhost:4000/api/star-history');
+        const res = await fetch(`${API_BASE_URL}/api/star-history`);
         const data = await res.json();
         if (Array.isArray(data)) {
           setStarHistory(data.map(d => ({
@@ -66,17 +69,18 @@ function App() {
 
   useEffect(() => {
     if (activeTab === 'promptfoo') {
+      console.log('🔄 Fetching data for promptfoo tab...');
       async function fetchPrVelocity() {
         try {
-          const res = await fetch('http://localhost:4000/api/pr-velocity');
+          console.log('📈 Fetching PR velocity...');
+          const res = await fetch(`${API_BASE_URL}/api/pr-velocity`);
           const data = await res.json();
+          console.log('📈 PR velocity response:', data);
           if (Array.isArray(data)) {
-            // Remove duplicates by keeping the entry with the highest rowid for each date
+            // Remove duplicates by keeping the latest entry for each date
             const byDate = {};
             data.forEach(d => {
-              if (!byDate[d.date] || (d.rowid !== undefined && d.rowid > byDate[d.date].rowid)) {
-                byDate[d.date] = d;
-              }
+              byDate[d.date] = d; // Keep the latest entry for each date
             });
             const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
             // Add a dummy data point for the next day to ensure the last point is visible
@@ -93,31 +97,29 @@ function App() {
               chartData.push({ date: nextDateStr, ratio: null }); // Only date and ratio: null
             }
 
+            console.log('📈 Setting PR velocity data:', chartData);
             setPrVelocity(chartData);
           } else {
+            console.log('📈 No PR velocity data array');
             setPrVelocity([]);
           }
-        } catch {
+        } catch (error) {
+          console.error('📈 PR velocity error:', error);
           setPrVelocity([]);
         }
       }
-      fetchPrVelocity();
-    }
-  }, [activeTab]);
 
-  useEffect(() => {
-    if (activeTab === 'promptfoo') {
       async function fetchIssueHealth() {
         try {
-          const res = await fetch('http://localhost:4000/api/issue-health');
+          console.log('🐛 Fetching issue health...');
+          const res = await fetch(`${API_BASE_URL}/api/issue-health`);
           const data = await res.json();
+          console.log('🐛 Issue health response:', data);
           if (Array.isArray(data)) {
-            // Remove duplicates by keeping the entry with the highest rowid for each date
+            // Remove duplicates by keeping the latest entry for each date
             const byDate = {};
             data.forEach(d => {
-              if (!byDate[d.date] || (d.rowid !== undefined && d.rowid > byDate[d.date].rowid)) {
-                byDate[d.date] = d;
-              }
+              byDate[d.date] = d; // Keep the latest entry for each date
             });
             const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
             // Add a dummy data point for the next day to ensure the last point is visible
@@ -133,36 +135,57 @@ function App() {
               const nextDateStr = nextDate.toISOString().slice(0, 10);
               chartData.push({ date: nextDateStr, ratio: null }); // Only date and ratio: null
             }
+
+            console.log('🐛 Setting issue health data:', chartData);
             setIssueHealth(chartData);
           } else {
+            console.log('🐛 No issue health data array');
             setIssueHealth([]);
           }
-        } catch {
+        } catch (error) {
+          console.error('🐛 Issue health error:', error);
           setIssueHealth([]);
         }
       }
-      fetchIssueHealth();
-    }
 
-    // Fetch package downloads data
-    async function fetchPackageDownloads() {
-      try {
-        const res = await fetch('http://localhost:4000/api/package-downloads');
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setPackageDownloads(data.map(d => ({
-            ...d,
-            week_start: d.week_start,
-            downloads: Number(d.downloads)
-          })));
-        } else {
+      async function fetchPackageDownloads() {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/package-downloads`);
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            // Remove duplicates by keeping the latest entry for each week
+            const byWeek = {};
+            data.forEach(d => {
+              byWeek[d.week_start] = d; // Keep the latest entry for each week
+            });
+            const sorted = Object.values(byWeek).sort((a, b) => a.week_start.localeCompare(b.week_start));
+            // Add a dummy data point for the next week to ensure the last point is visible
+            let chartData = [...sorted.map(d => ({
+              ...d,
+              week_start: d.week_start,
+              downloads: d.downloads !== undefined ? Number(d.downloads) : 0
+            }))];
+            if (chartData.length > 0) {
+              const lastWeek = new Date(chartData[chartData.length - 1].week_start + 'T00:00:00Z');
+              const nextWeek = new Date(lastWeek);
+              nextWeek.setDate(lastWeek.getDate() + 7);
+              const nextWeekStr = nextWeek.toISOString().slice(0, 10);
+              chartData.push({ week_start: nextWeekStr, downloads: null }); // Only week_start and downloads: null
+            }
+
+            setPackageDownloads(chartData);
+          } else {
+            setPackageDownloads([]);
+          }
+        } catch {
           setPackageDownloads([]);
         }
-      } catch {
-        setPackageDownloads([]);
       }
+
+      fetchPrVelocity();
+      fetchIssueHealth();
+      fetchPackageDownloads();
     }
-    fetchPackageDownloads();
   }, [activeTab]);
 
   return (

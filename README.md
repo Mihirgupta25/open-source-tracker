@@ -267,3 +267,19 @@ npm install
 ```
 
 This will install all required dependencies for both backend and frontend. If you still have issues, try deleting the `node_modules` folder and `package-lock.json` in the affected directory and run `npm install` again.
+
+**AWS DynamoDB Console Shows 0 Items**
+
+If you're using the AWS deployment and the DynamoDB console shows 0 items even though your application is working correctly:
+
+1. **Verify the correct region**: Make sure you're viewing DynamoDB in the **us-east-1** region (US East - N. Virginia)
+2. **Use the Explore table data feature**:
+   - Go to DynamoDB in us-east-1
+   - Click on any table name (e.g., `dev-star-growth`)
+   - Click the **"Explore table data"** tab
+   - Click **"Run scan"** to see all items
+3. **Alternative method**:
+   - In the table details, click the **"Items"** tab
+   - Click **"Create item"** or **"Scan"** to view existing items
+
+This is a common DynamoDB console display issue due to eventual consistency and caching. Your data is actually there and your application will work correctly even if the console shows 0 items in the table overview.

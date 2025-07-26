@@ -1,14 +1,37 @@
 {
-  "name": "open-source-tracker-root",
+  "name": "open-source-tracker",
   "version": "1.0.0",
-  "private": true,
+  "description": "Open Source Growth Tracker with AWS deployment",
   "scripts": {
-    "start": "concurrently \"cd backend && node index.js\" \"cd frontend && npm start\""
+    "start": "concurrently \"cd backend && node index.js\" \"cd frontend && npm start\"",
+    "build": "cd frontend && npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cdk": "cdk",
+    "cdk:dev": "cdk deploy --profile default --context environment=dev",
+    "cdk:prod": "cdk deploy --profile default --context environment=prod",
+    "cdk:destroy:dev": "cdk destroy --profile default --context environment=dev",
+    "cdk:destroy:prod": "cdk destroy --profile default --context environment=prod",
+    "cdk:diff:dev": "cdk diff --profile default --context environment=dev",
+    "cdk:diff:prod": "cdk diff --profile default --context environment=prod"
   },
+  "keywords": [
+    "github",
+    "analytics",
+    "aws",
+    "serverless"
+  ],
+  "author": "",
+  "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "@types/node": "^20.10.5",
+    "aws-cdk": "^2.124.0",
+    "aws-cdk-lib": "^2.124.0",
+    "concurrently": "^9.2.0",
+    "constructs": "^10.3.0",
+    "typescript": "^5.3.3"
   },
   "dependencies": {
+    "aws-sdk": "^2.1692.0",
     "better-sqlite3": "^12.2.0"
   }
 }

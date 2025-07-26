@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        const API_BASE_URL = 'https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod';
+        
+        async function testAPI() {
+            const results = document.getElementById('results');
+            
+            try {
+                // Test PR Velocity
+                console.log('Testing PR Velocity...');
+                const prRes = await fetch(`${API_BASE_URL}/api/pr-velocity`);
+                const prData = await prRes.json();
+                console.log('PR Velocity data:', prData);
+                
+                results.innerHTML += `<h3>PR Velocity (${prData.length} items):</h3>`;
+                results.innerHTML += `<pre>${JSON.stringify(prData, null, 2)}</pre>`;
+                
+                // Test Issue Health
+                console.log('Testing Issue Health...');
+                const issueRes = await fetch(`${API_BASE_URL}/api/issue-health`);
+                const issueData = await issueRes.json();
+                console.log('Issue Health data:', issueData);
+                
+                results.innerHTML += `<h3>Issue Health (${issueData.length} items):</h3>`;
+                results.innerHTML += `<pre>${JSON.stringify(issueData, null, 2)}</pre>`;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                results.innerHTML += `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html> 

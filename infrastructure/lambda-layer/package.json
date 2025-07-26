@@ -1,0 +1,9 @@
+{
+  "name": "open-source-tracker-lambda-layer",
+  "version": "1.0.0",
+  "description": "Shared dependencies for Open Source Tracker Lambda functions",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "aws-sdk": "^2.1531.0"
+  }
+} 
