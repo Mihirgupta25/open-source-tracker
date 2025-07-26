@@ -225,7 +225,7 @@ function App() {
           <div className="card">
             <h2>Pull Request Velocity</h2>
             <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
-              This chart visualizes the ratio of merged to open pull requests for the selected repository over time. Each point represents the ratio on a specific day, helping you understand the pace at which pull requests are being merged relative to those remaining open.
+              This chart visualizes the ratio of merged to open pull requests for the selected repository over time. Each point represents the ratio on a specific day, helping you understand the pace at which pull requests are being merged relative to those remaining open. Data updates automatically every day at 11:50 PM PST.
             </p>
 
             {prVelocity.length > 0 ? (
@@ -263,8 +263,8 @@ function App() {
           {/* Issue Health Section */}
           <div className="card">
             <h2>Issue Health</h2>
-            <p style={{ fontSize: '1.1rem', color: '#3b3b5c', marginBottom: 18, textAlign: 'left' }}>
-              This chart visualizes the ratio of closed to open issues for the selected repository over time. Each point represents the ratio on a specific day, helping you understand how efficiently issues are being resolved relative to those remaining open.
+            <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
+              This chart visualizes the ratio of closed to open issues for the selected repository over time. Each point represents the ratio on a specific day, helping you understand how efficiently issues are being resolved relative to those remaining open. Data updates automatically every day at 11:50 PM PST.
             </p>
 
             {issueHealth.length > 0 ? (
