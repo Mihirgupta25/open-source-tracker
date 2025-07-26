@@ -189,7 +189,7 @@ function App() {
             <div className="card">
               <h2>Star Growth</h2>
               <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
-                This chart visualizes the growth in GitHub stars for the selected repository over time. Each point represents the total number of stars recorded at a specific time, allowing you to track the project's popularity and community interest.
+                This chart visualizes the growth in GitHub stars for the selected repository over time. Each point represents the total number of stars recorded at a specific time, allowing you to track the project's popularity and community interest. Data is collected from the GitHub API every 3 hours and updates automatically.
               </p>
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
