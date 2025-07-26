@@ -12,7 +12,12 @@
     "cdk:destroy:dev": "cdk destroy --profile default --context environment=dev",
     "cdk:destroy:prod": "cdk destroy --profile default --context environment=prod",
     "cdk:diff:dev": "cdk diff --profile default --context environment=dev",
-    "cdk:diff:prod": "cdk diff --profile default --context environment=prod"
+    "cdk:diff:prod": "cdk diff --profile default --context environment=prod",
+    "dev:setup": "git checkout develop && git pull origin develop",
+    "dev:feature": "git checkout -b feature/$(date +%Y%m%d-%H%M%S)",
+    "dev:test": "echo 'Testing in dev environment: https://dcujo2wk56am6.cloudfront.net'",
+    "dev:promote": "git checkout main && git merge develop && git push origin main",
+    "dev:status": "echo 'Current branch:' && git branch --show-current && echo 'Dev URL: https://dcujo2wk56am6.cloudfront.net'"
   },
   "keywords": [
     "github",

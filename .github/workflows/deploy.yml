@@ -4,7 +4,17 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - prod
 
 env:
   AWS_REGION: us-east-1
@@ -39,7 +49,7 @@ jobs:
   deploy-dev:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
     
     steps:
     - uses: actions/checkout@v4
@@ -94,11 +104,31 @@ jobs:
           --stack-name "OpenSourceTrackerDev" \
           --query 'Stacks[0].Outputs[?OutputKey==`FrontendURL`].OutputValue' \
           --output text)"
+    
+    - name: Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const apiUrl = '${{ steps.deploy.outputs.api-url }}';
+          const frontendUrl = '${{ steps.deploy.outputs.frontend-url }}';
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `🚀 **Dev Deployment Complete!**
+            
+            **Frontend:** https://dcujo2wk56am6.cloudfront.net
+            **API:** https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod
+            
+            Test your changes and approve this PR to deploy to production.`
+          })
 
   deploy-prod:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
     environment: production
     
     steps:
