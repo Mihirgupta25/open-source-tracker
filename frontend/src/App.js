@@ -238,7 +238,7 @@ function App() {
 
             {prVelocity.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" 
                     tickFormatter={date => {
@@ -248,6 +248,12 @@ function App() {
                       } catch (e) {
                         return date;
                       }
+                    }}
+                    label={{
+                      value: 'Date',
+                      position: 'insideBottom',
+                      dy: 20,
+                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
                     }}
                   />
                   <YAxis />
