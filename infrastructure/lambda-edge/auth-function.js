@@ -1,8 +1,27 @@
 'use strict';
 
-// Basic authentication for dev environment
-// Username: dev
-// Password: tracker2024
+const AWS = require('aws-sdk');
+const secretsManager = new AWS.SecretsManager();
+
+// Get credentials from AWS Secrets Manager
+async function getCredentials() {
+  try {
+    const secretName = process.env.AUTH_SECRET_NAME || 'dev-environment-auth';
+    const data = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+    const secret = JSON.parse(data.SecretString);
+    return {
+      username: secret.username || 'dev',
+      password: secret.password || 'tracker2024'
+    };
+  } catch (error) {
+    console.error('Error fetching credentials:', error);
+    // Fallback to default credentials
+    return {
+      username: 'dev',
+      password: 'tracker2024'
+    };
+  }
+}
 
 exports.handler = async (event) => {
     const request = event.Records[0].cf.request;
@@ -23,8 +42,11 @@ exports.handler = async (event) => {
         const credentials = Buffer.from(authHeader.replace('Basic ', ''), 'base64').toString();
         const [username, password] = credentials.split(':');
         
-        // Check credentials (dev/tracker2024)
-        if (username === 'dev' && password === 'tracker2024') {
+        // Get stored credentials
+        const storedCredentials = await getCredentials();
+        
+        // Check credentials
+        if (username === storedCredentials.username && password === storedCredentials.password) {
             return request;
         }
     }

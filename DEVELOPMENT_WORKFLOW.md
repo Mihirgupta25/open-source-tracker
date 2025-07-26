@@ -144,7 +144,7 @@ Before promoting to production, ensure:
 
 ## 🔐 **Dev Environment Authentication**
 
-The dev environment is password protected to prevent unauthorized access.
+The dev environment is password protected to prevent unauthorized access. Credentials are stored securely in AWS Secrets Manager.
 
 ### **Default Credentials:**
 - **Username:** `dev`
@@ -160,10 +160,13 @@ npm run dev:auth:update
 
 # Update to custom credentials
 npm run dev:auth:custom <username> <password>
-
-# After changing credentials, redeploy dev environment
-npm run cdk:dev
 ```
+
+### **Security Features:**
+- ✅ **AWS Secrets Manager**: Credentials stored securely in AWS
+- ✅ **No Hardcoded Values**: No credentials in source code
+- ✅ **Immediate Updates**: Changes take effect without redeployment
+- ✅ **Access Control**: Only authorized users can update credentials
 
 ## 📚 **Useful Commands**
 

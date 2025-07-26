@@ -222,6 +222,20 @@ export class OpenSourceTrackerStack extends cdk.Stack {
       autoDeleteObjects: environment !== 'prod',
     });
 
+    // Authentication Secret for dev environment
+    let authSecret: secretsmanager.Secret | undefined;
+    if (environment === 'dev') {
+      authSecret = new secretsmanager.Secret(this, 'DevAuthSecret', {
+        secretName: `${environment}-dev-auth-credentials`,
+        description: 'Dev environment authentication credentials',
+        generateSecretString: {
+          secretStringTemplate: JSON.stringify({ username: 'dev', password: 'tracker2024' }),
+          generateStringKey: 'password',
+          excludeCharacters: '"@/\\',
+        },
+      });
+    }
+
     // Lambda@Edge function for dev environment authentication
     let authFunction: lambda.Function | undefined;
     if (environment === 'dev') {
@@ -231,7 +245,13 @@ export class OpenSourceTrackerStack extends cdk.Stack {
         code: lambda.Code.fromAsset(path.join(__dirname, '../lambda-edge')),
         timeout: cdk.Duration.seconds(5),
         memorySize: 128,
+        environment: {
+          AUTH_SECRET_NAME: authSecret!.secretName,
+        },
       });
+      
+      // Grant permission to read the auth secret
+      authSecret!.grantRead(authFunction);
     }
 
     // CloudFront Distribution
