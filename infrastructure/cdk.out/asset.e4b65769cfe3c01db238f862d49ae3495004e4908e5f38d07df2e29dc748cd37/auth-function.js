@@ -1,15 +1,26 @@
 'use strict';
 
-// Lambda@Edge doesn't support AWS SDK, so we use hardcoded credentials
+const AWS = require('aws-sdk');
+const secretsManager = new AWS.SecretsManager();
 
-// Get credentials - Lambda@Edge doesn't support environment variables or AWS SDK
-// Using hardcoded credentials for now (can be updated via deployment)
-function getCredentials() {
-  // These credentials can be updated by redeploying the function
-  return {
-    username: 'dev',
-    password: 'tracker2024'
-  };
+// Get credentials from AWS Secrets Manager
+async function getCredentials() {
+  try {
+    const secretName = process.env.AUTH_SECRET_NAME || 'dev-environment-auth';
+    const data = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+    const secret = JSON.parse(data.SecretString);
+    return {
+      username: secret.username || 'dev',
+      password: secret.password || 'tracker2024'
+    };
+  } catch (error) {
+    console.error('Error fetching credentials:', error);
+    // Fallback to default credentials
+    return {
+      username: 'dev',
+      password: 'tracker2024'
+    };
+  }
 }
 
 exports.handler = async (event) => {
@@ -32,7 +43,7 @@ exports.handler = async (event) => {
         const [username, password] = credentials.split(':');
         
         // Get stored credentials
-        const storedCredentials = getCredentials();
+        const storedCredentials = await getCredentials();
         
         // Check credentials
         if (username === storedCredentials.username && password === storedCredentials.password) {

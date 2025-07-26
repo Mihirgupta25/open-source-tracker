@@ -1651,6 +1651,83 @@
     "aws:asset:property": "Code"
    }
   },
+  "AuthFunctionServiceRole87A7A68C": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": [
+         "edgelambda.amazonaws.com",
+         "lambda.amazonaws.com"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/AuthFunction/ServiceRole/Resource"
+   }
+  },
+  "AuthFunctionA1CD5E0F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-071493677444-us-east-1",
+     "S3Key": "8208fc7d162cb87ca2f9ce4d0fe1d750a9974f2e7e7bbf3ed1470fd335d8f95c.zip"
+    },
+    "Handler": "auth-function.handler",
+    "MemorySize": 128,
+    "Role": {
+     "Fn::GetAtt": [
+      "AuthFunctionServiceRole87A7A68C",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs18.x",
+    "Timeout": 5
+   },
+   "DependsOn": [
+    "AuthFunctionServiceRole87A7A68C"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/AuthFunction/Resource",
+    "aws:asset:path": "asset.8208fc7d162cb87ca2f9ce4d0fe1d750a9974f2e7e7bbf3ed1470fd335d8f95c",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "AuthFunctionCurrentVersionDB17CE86e4f7d11bd70cd002a082df9a949a406c": {
+   "Type": "AWS::Lambda::Version",
+   "Properties": {
+    "FunctionName": {
+     "Ref": "AuthFunctionA1CD5E0F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "OpenSourceTrackerDev/AuthFunction/CurrentVersion/Resource",
+    "aws:cdk:do-not-refactor": true
+   }
+  },
   "FrontendDistributionE6EAF405": {
    "Type": "AWS::CloudFront::Distribution",
    "Properties": {
@@ -1665,6 +1742,14 @@
      "DefaultCacheBehavior": {
       "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
       "Compress": true,
+      "LambdaFunctionAssociations": [
+       {
+        "EventType": "viewer-request",
+        "LambdaFunctionARN": {
+         "Ref": "AuthFunctionCurrentVersionDB17CE86e4f7d11bd70cd002a082df9a949a406c"
+        }
+       }
+      ],
       "TargetOriginId": "OpenSourceTrackerDevFrontendDistributionOrigin1D7B9C38A",
       "ViewerProtocolPolicy": "redirect-to-https"
      },
@@ -1707,7 +1792,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1VQy27CMBD8Fu7GpRSpZyjqiaqIVr0ix16CIbYjrw2Novx7104o4bQzO7PPOZ/PXvlsIq44leo8rXTB268g5JlRat+qxgrjFCW/RVEBezvYDDqGID0ENMKKEjwVZZ4MPepYJUyhBG83ogH/Ax61s0l/4O/RyjAIY7wFbzQmC4162QtEGsaXKRDn7SrKM4SVQGA9TEUD6sPWVVo293TPO6aF4e3O9cfkeHfePJUrkW9cuYMANq8EFwJIhXEojOkJotalCHAVDSmAYVnrLA5wDXXlGkOVKTti9OEyt+kB+V30EvI5HxCOTiVxQFvvfpubZWifccdk5aI6eGcDb9cag9dFvH1wzLvufwbLP0xztS3H3RL+jKGOtGzE4MxdeKC0zkUr8GnZjlmngJ/w6TJf8AV/npxQ66mP9DQDfNfHP5rOsf1lAgAA"
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1VQy27CMBD8Fu7GpRSpZyjqiaqIVr2ijb0EQ2xHfkCjKP/etRNKOO3Mzox3vXM+n73y2QSufirkeVqpgrdfAcSZUWvfysaAtpKa31BUyN4OJoOOeRQOg9dgoERHocyToUcdq0AXEni7gQbdDzqvrEn6A3+PRoRBGOMtOq18toyiA6TpL3vwnubzZSrEebuK4oxhBR5ZD1NiQH3Z2kqJ5t7ueccUaN7ubP+/XO/Om6eypecbW+4woMlb4oWAp2AcgjHdBWpVQsArNKSgD8taZXGAa6wr22hKpu6I0dHL/EwPyG+jE5i/84HhaGUSB7R19re5WYbnM+6YqGyUB2dN4O1a+eBUEW9HHfOu+5/B8g3TXGXK8WsJf8ZQR1o2+mD1XXigtM5FSXRp2Y4ZK5Gf/NNlvuAL/jw5eaWmLtLRNPJdX/8AggxibHgCAAA="
    },
    "Metadata": {
     "aws:cdk:path": "OpenSourceTrackerDev/CDKMetadata/Default"

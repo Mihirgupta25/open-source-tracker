@@ -76,16 +76,31 @@
         }
       }
     },
-    "b1aa042124fdb80fe375227104592d80ff7c44d262a308d00b7deee4fdc92686": {
+    "8208fc7d162cb87ca2f9ce4d0fe1d750a9974f2e7e7bbf3ed1470fd335d8f95c": {
+      "displayName": "AuthFunction/Code",
+      "source": {
+        "path": "asset.8208fc7d162cb87ca2f9ce4d0fe1d750a9974f2e7e7bbf3ed1470fd335d8f95c",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "071493677444-us-east-1-fc474e02": {
+          "bucketName": "cdk-hnb659fds-assets-071493677444-us-east-1",
+          "objectKey": "8208fc7d162cb87ca2f9ce4d0fe1d750a9974f2e7e7bbf3ed1470fd335d8f95c.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::071493677444:role/cdk-hnb659fds-file-publishing-role-071493677444-us-east-1"
+        }
+      }
+    },
+    "d5faa34f4d58061a0c2a8378f4a2fc00a0b0433658c7f239f0eb0910534d6228": {
       "displayName": "OpenSourceTrackerDev Template",
       "source": {
         "path": "OpenSourceTrackerDev.template.json",
         "packaging": "file"
       },
       "destinations": {
-        "071493677444-us-east-1-75d0f8fc": {
+        "071493677444-us-east-1-2e20f009": {
           "bucketName": "cdk-hnb659fds-assets-071493677444-us-east-1",
-          "objectKey": "b1aa042124fdb80fe375227104592d80ff7c44d262a308d00b7deee4fdc92686.json",
+          "objectKey": "d5faa34f4d58061a0c2a8378f4a2fc00a0b0433658c7f239f0eb0910534d6228.json",
           "region": "us-east-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::071493677444:role/cdk-hnb659fds-file-publishing-role-071493677444-us-east-1"
         }

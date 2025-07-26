@@ -5,6 +5,8 @@ export interface OpenSourceTrackerStackProps extends cdk.StackProps {
     domainName?: string;
     githubTokenSecretName: string;
     dataCollectionSchedule: string;
+    useSharedDatabase?: boolean;
+    sharedDatabaseEnvironment?: string;
 }
 export declare class OpenSourceTrackerStack extends cdk.Stack {
     constructor(scope: Construct, id: string, props: OpenSourceTrackerStackProps);

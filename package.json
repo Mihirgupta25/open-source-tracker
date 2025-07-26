@@ -5,7 +5,7 @@
   "scripts": {
     "start": "concurrently \"cd backend && node index.js\" \"cd frontend && npm start\"",
     "build": "cd frontend && npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "cd frontend && npm test -- --watchAll=false --passWithNoTests",
     "cdk": "cdk",
     "cdk:dev": "cdk deploy --profile default --context environment=dev",
     "cdk:prod": "cdk deploy --profile default --context environment=prod",

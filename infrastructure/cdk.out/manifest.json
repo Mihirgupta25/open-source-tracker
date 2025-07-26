@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::071493677444:role/cdk-hnb659fds-deploy-role-071493677444-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::071493677444:role/cdk-hnb659fds-cfn-exec-role-071493677444-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-071493677444-us-east-1/b1aa042124fdb80fe375227104592d80ff7c44d262a308d00b7deee4fdc92686.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-071493677444-us-east-1/d5faa34f4d58061a0c2a8378f4a2fc00a0b0433658c7f239f0eb0910534d6228.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -370,6 +370,24 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F"
+          }
+        ],
+        "/OpenSourceTrackerDev/AuthFunction/ServiceRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthFunctionServiceRole87A7A68C"
+          }
+        ],
+        "/OpenSourceTrackerDev/AuthFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthFunctionA1CD5E0F"
+          }
+        ],
+        "/OpenSourceTrackerDev/AuthFunction/CurrentVersion/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthFunctionCurrentVersionDB17CE86e4f7d11bd70cd002a082df9a949a406c"
           }
         ],
         "/OpenSourceTrackerDev/FrontendDistribution/Resource": [
