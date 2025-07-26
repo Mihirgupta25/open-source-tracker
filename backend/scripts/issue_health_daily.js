@@ -78,15 +78,17 @@ function getDateString(date) {
 
 function getNextRunTime() {
   const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(12, 0, 0, 0); // 12:00 PM PST
   
-  // Convert to PST (UTC-8)
-  const pstOffset = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
-  tomorrow.setTime(tomorrow.getTime() + pstOffset);
+  // Set target time to 11:50 PM today
+  const targetTime = new Date(now);
+  targetTime.setHours(23, 50, 0, 0); // 11:50 PM
   
-  return tomorrow;
+  // If it's already past 11:50 PM today, schedule for tomorrow
+  if (now.getTime() > targetTime.getTime()) {
+    targetTime.setDate(targetTime.getDate() + 1);
+  }
+  
+  return targetTime;
 }
 
 async function runDailyCollection() {
