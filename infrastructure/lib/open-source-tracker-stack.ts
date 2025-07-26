@@ -10,6 +10,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as path from 'path';
 import { Construct } from 'constructs';
 
 export interface OpenSourceTrackerStackProps extends cdk.StackProps {
@@ -221,12 +222,30 @@ export class OpenSourceTrackerStack extends cdk.Stack {
       autoDeleteObjects: environment !== 'prod',
     });
 
+    // Lambda@Edge function for dev environment authentication
+    let authFunction: lambda.Function | undefined;
+    if (environment === 'dev') {
+      authFunction = new lambda.Function(this, 'AuthFunction', {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        handler: 'auth-function.handler',
+        code: lambda.Code.fromAsset(path.join(__dirname, '../lambda-edge')),
+        timeout: cdk.Duration.seconds(5),
+        memorySize: 128,
+      });
+    }
+
     // CloudFront Distribution
     const distribution = new cloudfront.Distribution(this, 'FrontendDistribution', {
       defaultBehavior: {
         origin: new origins.S3Origin(frontendBucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        ...(environment === 'dev' && authFunction ? {
+          edgeLambdas: [{
+            functionVersion: authFunction.currentVersion,
+            eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,
+          }],
+        } : {}),
       },
       errorResponses: [
         {

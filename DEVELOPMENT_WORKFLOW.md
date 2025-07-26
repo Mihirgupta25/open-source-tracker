@@ -82,10 +82,10 @@ git push origin main
 
 ## 🌐 **Environment URLs**
 
-| Environment | Frontend URL | API URL | Purpose |
-|-------------|--------------|---------|---------|
-| **Dev** | https://dcujo2wk56am6.cloudfront.net | https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod | Testing new features |
-| **Prod** | TBD (after first prod deployment) | TBD | Live application |
+| Environment | Frontend URL | API URL | Purpose | Authentication |
+|-------------|--------------|---------|---------|----------------|
+| **Dev** | https://dcujo2wk56am6.cloudfront.net | https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod | Testing new features | 🔒 Password Protected |
+| **Prod** | TBD (after first prod deployment) | TBD | Live application | 🌐 Public Access |
 
 ## 🔧 **Branch Strategy**
 
@@ -141,6 +141,29 @@ Before promoting to production, ensure:
 2. Check for any breaking changes
 3. Verify all tests pass
 4. Review deployment logs
+
+## 🔐 **Dev Environment Authentication**
+
+The dev environment is password protected to prevent unauthorized access.
+
+### **Default Credentials:**
+- **Username:** `dev`
+- **Password:** `tracker2024`
+
+### **Managing Authentication:**
+```bash
+# Show current credentials
+npm run dev:auth:show
+
+# Update to default credentials
+npm run dev:auth:update
+
+# Update to custom credentials
+npm run dev:auth:custom <username> <password>
+
+# After changing credentials, redeploy dev environment
+npm run cdk:dev
+```
 
 ## 📚 **Useful Commands**
 
