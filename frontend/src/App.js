@@ -202,7 +202,14 @@ function App() {
                       style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
                     }}
                   />
-                  <YAxis domain={['auto', 'auto']} />
+                  <YAxis domain={['auto', 'auto']} 
+                    label={{
+                      value: 'Stars',
+                      position: 'insideLeft',
+                      dy: -10,
+                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
+                    }}
+                  />
                   {/* Add ReferenceLine for each day change */}
                   {starHistory.length > 1 && starHistory.map((point, idx, arr) => {
                     if (idx === 0) return null;
