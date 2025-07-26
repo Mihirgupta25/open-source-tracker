@@ -328,7 +328,7 @@ function App() {
 
             {packageDownloads.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={packageDownloads} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <LineChart data={packageDownloads} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="week_start" 
                     tickFormatter={date => {
@@ -338,6 +338,12 @@ function App() {
                       } catch (e) {
                         return date;
                       }
+                    }}
+                    label={{
+                      value: 'Week',
+                      position: 'insideBottom',
+                      dy: 20,
+                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
                     }}
                   />
                   <YAxis />
