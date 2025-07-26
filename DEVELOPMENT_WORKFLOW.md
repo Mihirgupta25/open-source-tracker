@@ -82,10 +82,35 @@ git push origin main
 
 ## 🌐 **Environment URLs**
 
-| Environment | Frontend URL | API URL | Purpose | Authentication |
-|-------------|--------------|---------|---------|----------------|
-| **Dev** | https://dcujo2wk56am6.cloudfront.net | https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod | Testing new features | 🔒 Password Protected |
-| **Prod** | TBD (after first prod deployment) | TBD | Live application | 🌐 Public Access |
+| Environment | Frontend URL | API URL | Purpose | Authentication | Database |
+|-------------|--------------|---------|---------|----------------|----------|
+| **Dev** | https://dcujo2wk56am6.cloudfront.net | https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod | Testing new features | 🔒 Password Protected | 🗄️ Shared (dev tables) |
+| **Prod** | TBD (after first prod deployment) | TBD | Live application | 🌐 Public Access | 🗄️ Shared (dev tables) |
+
+## 🗄️ **Database Strategy**
+
+### **Shared Database Setup (Current)**
+Both dev and prod environments currently use the same database tables (dev tables) to ensure data consistency.
+
+### **Database Management Commands:**
+```bash
+# Check database status
+npm run db:status
+
+# Sync data from dev to prod
+npm run db:sync
+
+# Copy data between environments
+npm run db:copy dev prod
+
+# Separate databases (when you want dev-specific changes)
+npm run db:separate
+```
+
+### **When to Separate Databases:**
+- ✅ **Keep Shared**: When both environments should have identical data
+- 🔀 **Separate**: When you want to test changes in dev without affecting prod
+- 🔄 **Sync**: When you want to copy prod data to dev for testing
 
 ## 🔧 **Branch Strategy**
 

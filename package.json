@@ -20,7 +20,11 @@
     "dev:status": "echo 'Current branch:' && git branch --show-current && echo 'Dev URL: https://dcujo2wk56am6.cloudfront.net'",
     "dev:auth:show": "node scripts/update-dev-auth.js show",
     "dev:auth:update": "node scripts/update-dev-auth.js update",
-    "dev:auth:custom": "node scripts/update-dev-auth.js update"
+    "dev:auth:custom": "node scripts/update-dev-auth.js update",
+    "db:status": "node scripts/manage-databases.js status",
+    "db:separate": "node scripts/manage-databases.js separate",
+    "db:sync": "node scripts/manage-databases.js sync",
+    "db:copy": "node scripts/manage-databases.js copy"
   },
   "keywords": [
     "github",

@@ -18,17 +18,21 @@ export interface OpenSourceTrackerStackProps extends cdk.StackProps {
   domainName?: string;
   githubTokenSecretName: string;
   dataCollectionSchedule: string;
+  useSharedDatabase?: boolean;
+  sharedDatabaseEnvironment?: string;
 }
 
 export class OpenSourceTrackerStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: OpenSourceTrackerStackProps) {
     super(scope, id, props);
 
-    const { environment, domainName, githubTokenSecretName, dataCollectionSchedule } = props;
+    const { environment, domainName, githubTokenSecretName, dataCollectionSchedule, useSharedDatabase = false, sharedDatabaseEnvironment = 'prod' } = props;
 
     // DynamoDB Tables
+    const tableSuffix = useSharedDatabase ? sharedDatabaseEnvironment : environment;
+    
     const starGrowthTable = new dynamodb.Table(this, 'StarGrowthTable', {
-      tableName: `${environment}-star-growth`,
+      tableName: `${tableSuffix}-star-growth`,
       partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -36,7 +40,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     });
 
     const prVelocityTable = new dynamodb.Table(this, 'PRVelocityTable', {
-      tableName: `${environment}-pr-velocity`,
+      tableName: `${tableSuffix}-pr-velocity`,
       partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'date', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -44,7 +48,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     });
 
     const issueHealthTable = new dynamodb.Table(this, 'IssueHealthTable', {
-      tableName: `${environment}-issue-health`,
+      tableName: `${tableSuffix}-issue-health`,
       partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'date', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
@@ -52,7 +56,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     });
 
     const packageDownloadsTable = new dynamodb.Table(this, 'PackageDownloadsTable', {
-      tableName: `${environment}-package-downloads`,
+      tableName: `${tableSuffix}-package-downloads`,
       partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'week_start', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,

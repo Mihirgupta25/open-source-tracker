@@ -16,6 +16,8 @@ const envConfigs = {
     domainName: undefined, // No custom domain for dev
     githubTokenSecretName: 'github-token-dev',
     dataCollectionSchedule: 'cron(0 12 * * ? *)', // Daily at 12 PM UTC
+    useSharedDatabase: true, // Dev uses shared database initially
+    sharedDatabaseEnvironment: 'dev', // Use dev tables as the shared database
   },
   prod: {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: 'us-east-1' },
@@ -23,6 +25,8 @@ const envConfigs = {
     domainName: undefined, // Add your custom domain here if needed
     githubTokenSecretName: 'github-token-prod',
     dataCollectionSchedule: 'cron(0 12 * * ? *)', // Daily at 12 PM UTC
+    useSharedDatabase: true, // Prod uses shared database initially
+    sharedDatabaseEnvironment: 'dev', // Use dev tables as the shared database
   }
 };
 
@@ -37,6 +41,8 @@ new OpenSourceTrackerStack(app, config.stackName, {
   domainName: config.domainName,
   githubTokenSecretName: config.githubTokenSecretName,
   dataCollectionSchedule: config.dataCollectionSchedule,
+  useSharedDatabase: config.useSharedDatabase,
+  sharedDatabaseEnvironment: config.sharedDatabaseEnvironment,
   env: config.env,
   description: `Open Source Tracker ${environment} environment`,
 }); 
