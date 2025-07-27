@@ -24,7 +24,10 @@
     "db:status": "node scripts/manage-databases.js status",
     "db:separate": "node scripts/manage-databases.js separate",
     "db:sync": "node scripts/manage-databases.js sync",
-    "db:copy": "node scripts/manage-databases.js copy"
+    "db:copy": "node scripts/manage-databases.js copy",
+    "automation:status": "node scripts/check-automation.js status",
+    "automation:setup-token": "node scripts/check-automation.js setup-token",
+    "automation:test": "node scripts/check-automation.js test"
   },
   "keywords": [
     "github",

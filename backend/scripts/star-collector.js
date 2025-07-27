@@ -40,7 +40,11 @@ async function fetchStarCount(repo, githubToken) {
 
 // Store star count in DynamoDB
 async function storeStarCount(repo, starCount) {
-  const timestamp = new Date().toISOString();
+  // Convert to PST timezone
+  const now = new Date();
+  const pstOffset = -8 * 60; // PST is UTC-8
+  const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+  const timestamp = pstTime.toISOString();
   
   const params = {
     TableName: STAR_GROWTH_TABLE,
@@ -82,7 +86,7 @@ exports.handler = async (event) => {
         message: 'Star collection completed successfully',
         repo: REPO,
         starCount: starCount,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toLocaleString("en-US", {timeZone: "America/Los_Angeles"})
       })
     };
     

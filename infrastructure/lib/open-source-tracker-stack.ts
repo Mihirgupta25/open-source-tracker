@@ -31,48 +31,70 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     // DynamoDB Tables
     const tableSuffix = useSharedDatabase ? sharedDatabaseEnvironment : environment;
     
-    const starGrowthTable = new dynamodb.Table(this, 'StarGrowthTable', {
-      tableName: `${tableSuffix}-star-growth`,
-      partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
+    // Create or reference DynamoDB tables based on shared database configuration
+    let starGrowthTable: dynamodb.ITable;
+    let prVelocityTable: dynamodb.ITable;
+    let issueHealthTable: dynamodb.ITable;
+    let packageDownloadsTable: dynamodb.ITable;
 
-    const prVelocityTable = new dynamodb.Table(this, 'PRVelocityTable', {
-      tableName: `${tableSuffix}-pr-velocity`,
-      partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'date', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
+    if (useSharedDatabase && environment !== sharedDatabaseEnvironment) {
+      // Reference existing tables from the shared environment
+      starGrowthTable = dynamodb.Table.fromTableName(this, 'StarGrowthTable', `${tableSuffix}-star-growth`);
+      prVelocityTable = dynamodb.Table.fromTableName(this, 'PRVelocityTable', `${tableSuffix}-pr-velocity`);
+      issueHealthTable = dynamodb.Table.fromTableName(this, 'IssueHealthTable', `${tableSuffix}-issue-health`);
+      packageDownloadsTable = dynamodb.Table.fromTableName(this, 'PackageDownloadsTable', `${tableSuffix}-package-downloads`);
+    } else {
+      // Create new tables for this environment
+      starGrowthTable = new dynamodb.Table(this, 'StarGrowthTable', {
+        tableName: `${tableSuffix}-star-growth`,
+        partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
+        sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      });
 
-    const issueHealthTable = new dynamodb.Table(this, 'IssueHealthTable', {
-      tableName: `${tableSuffix}-issue-health`,
-      partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'date', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
+      prVelocityTable = new dynamodb.Table(this, 'PRVelocityTable', {
+        tableName: `${tableSuffix}-pr-velocity`,
+        partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
+        sortKey: { name: 'date', type: dynamodb.AttributeType.STRING },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      });
 
-    const packageDownloadsTable = new dynamodb.Table(this, 'PackageDownloadsTable', {
-      tableName: `${tableSuffix}-package-downloads`,
-      partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
-      sortKey: { name: 'week_start', type: dynamodb.AttributeType.STRING },
-      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-    });
+      issueHealthTable = new dynamodb.Table(this, 'IssueHealthTable', {
+        tableName: `${tableSuffix}-issue-health`,
+        partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
+        sortKey: { name: 'date', type: dynamodb.AttributeType.STRING },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      });
+
+      packageDownloadsTable = new dynamodb.Table(this, 'PackageDownloadsTable', {
+        tableName: `${tableSuffix}-package-downloads`,
+        partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
+        sortKey: { name: 'week_start', type: dynamodb.AttributeType.STRING },
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
+      });
+    }
 
     // GitHub Token Secret
-    const githubTokenSecret = new secretsmanager.Secret(this, 'GitHubTokenSecret', {
-      secretName: githubTokenSecretName,
-      description: `GitHub API token for ${environment} environment`,
-      generateSecretString: {
-        secretStringTemplate: JSON.stringify({ token: '' }),
-        generateStringKey: 'token',
-        excludeCharacters: '"@/\\',
-      },
-    });
+    let githubTokenSecret: secretsmanager.ISecret;
+    if (useSharedDatabase && environment !== sharedDatabaseEnvironment) {
+      // Reference existing secret from the shared environment
+      githubTokenSecret = secretsmanager.Secret.fromSecretNameV2(this, 'GitHubTokenSecret', githubTokenSecretName);
+    } else {
+      // Create new secret for this environment
+      githubTokenSecret = new secretsmanager.Secret(this, 'GitHubTokenSecret', {
+        secretName: githubTokenSecretName,
+        description: `GitHub API token for ${environment} environment`,
+        generateSecretString: {
+          secretStringTemplate: JSON.stringify({ token: '' }),
+          generateStringKey: 'token',
+          excludeCharacters: '"@/\\',
+        },
+      });
+    }
 
     // Lambda Layer for shared dependencies
     const sharedLayer = new lambda.LayerVersion(this, 'SharedLayer', {
@@ -184,16 +206,33 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     githubTokenSecret.grantRead(packageDownloadsCollector);
 
     // EventBridge Rules for scheduled data collection
-    const dataCollectionRule = new events.Rule(this, 'DataCollectionRule', {
-      schedule: events.Schedule.expression(dataCollectionSchedule),
-      description: `Daily data collection for ${environment} environment`,
+    // Star growth: every 3 hours starting at 3 AM PST (11 AM UTC)
+    const frequentDataCollectionRule = new events.Rule(this, 'FrequentDataCollectionRule', {
+      schedule: events.Schedule.expression('cron(0 11/3 * * ? *)'), // 11 AM UTC = 3 AM PST, then every 3 hours
+      description: `Frequent data collection (every 3 hours starting 3 AM PST) for ${environment} environment`,
     });
 
-    // Add targets to the rule
-    dataCollectionRule.addTarget(new targets.LambdaFunction(starGrowthCollector));
-    dataCollectionRule.addTarget(new targets.LambdaFunction(prVelocityCollector));
-    dataCollectionRule.addTarget(new targets.LambdaFunction(issueHealthCollector));
-    dataCollectionRule.addTarget(new targets.LambdaFunction(packageDownloadsCollector));
+    // PR velocity and issue health: once daily at 11:50 PM PST (7:50 AM UTC next day)
+    const dailyDataCollectionRule = new events.Rule(this, 'DailyDataCollectionRule', {
+      schedule: events.Schedule.expression('cron(50 7 * * ? *)'), // 7:50 AM UTC = 11:50 PM PST
+      description: `Daily data collection (11:50 PM PST) for ${environment} environment`,
+    });
+
+    // Package downloads: once every 7 days starting on the 29th at 11:50 PM PST (7:50 AM UTC next day)
+    const weeklyDataCollectionRule = new events.Rule(this, 'WeeklyDataCollectionRule', {
+      schedule: events.Schedule.expression('cron(50 7 ? * SUN *)'), // 7:50 AM UTC = 11:50 PM PST on Sundays
+      description: `Weekly data collection (every Sunday at 11:50 PM PST) for ${environment} environment`,
+    });
+
+    // Add targets to the frequent rule (every 3 hours)
+    frequentDataCollectionRule.addTarget(new targets.LambdaFunction(starGrowthCollector));
+
+    // Add targets to the daily rule (once per day)
+    dailyDataCollectionRule.addTarget(new targets.LambdaFunction(prVelocityCollector));
+    dailyDataCollectionRule.addTarget(new targets.LambdaFunction(issueHealthCollector));
+
+    // Add targets to the weekly rule (once per week)
+    weeklyDataCollectionRule.addTarget(new targets.LambdaFunction(packageDownloadsCollector));
 
     // API Gateway
     const api = new apigateway.RestApi(this, 'OpenSourceTrackerAPI', {
@@ -226,6 +265,16 @@ export class OpenSourceTrackerStack extends cdk.Stack {
       autoDeleteObjects: environment !== 'prod',
     });
 
+    // Grant public read access to the bucket
+    frontendBucket.addToResourcePolicy(new iam.PolicyStatement({
+      actions: ['s3:GetObject'],
+      resources: [frontendBucket.arnForObjects('*')],
+      principals: [new iam.AnyPrincipal()],
+    }));
+
+    // Use S3Origin with proper configuration
+    const s3Origin = new origins.S3Origin(frontendBucket);
+
     // Lambda@Edge function for dev environment authentication
     let authFunction: lambda.Function | undefined;
     if (environment === 'dev') {
@@ -241,7 +290,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     // CloudFront Distribution
     const distribution = new cloudfront.Distribution(this, 'FrontendDistribution', {
       defaultBehavior: {
-        origin: new origins.S3Origin(frontendBucket),
+        origin: s3Origin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
         ...(environment === 'dev' && authFunction ? {

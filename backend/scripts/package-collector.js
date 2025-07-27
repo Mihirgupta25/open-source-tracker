@@ -43,8 +43,11 @@ async function fetchPackageDownloads(packageName) {
 
 // Store package downloads data in DynamoDB
 async function storePackageDownloads(repo, downloads) {
+  // Convert to PST timezone
   const now = new Date();
-  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+  const pstOffset = -8 * 60; // PST is UTC-8
+  const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+  const weekStart = new Date(pstTime.getFullYear(), pstTime.getMonth(), pstTime.getDate() - pstTime.getDay());
   const weekStartStr = weekStart.toISOString().split('T')[0]; // YYYY-MM-DD format
   
   const params = {
@@ -87,7 +90,7 @@ exports.handler = async (event) => {
         message: 'Package downloads collection completed successfully',
         repo: REPO,
         downloads: downloads,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toLocaleString("en-US", {timeZone: "America/Los_Angeles"})
       })
     };
     

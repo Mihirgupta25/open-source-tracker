@@ -1,285 +1,408 @@
 # Open Source Growth Tracker
 
-A modern web app to track GitHub repository traction metrics, including star growth and pull request velocity, with a beautiful and intuitive UI.
+A modern web app to track GitHub repository traction metrics, including star growth, pull request velocity, issue health, and package downloads, with a beautiful and intuitive UI. Now deployed on AWS with separate dev and production environments.
+
+---
+
+## 🌟 New Features (Latest Update)
+
+### 🚀 AWS Cloud Deployment
+- **Serverless Architecture**: Lambda functions, DynamoDB, S3, CloudFront, API Gateway
+- **Multi-Environment Setup**: Separate dev and production environments
+- **Environment Indicators**: Visual badges to distinguish dev vs production
+- **Password Protection**: Dev environment requires authentication
+- **Automated CI/CD**: GitHub Actions for seamless deployments
+
+### 📊 Enhanced Data Collection
+- **Smart Scheduling**: Different collection frequencies for different metrics
+  - **Star Growth**: Every 3 hours starting at 3 AM PST
+  - **PR Velocity & Issue Health**: Daily at 11:50 PM PST
+  - **Package Downloads**: Weekly on Sundays at 11:50 PM PST
+- **Timezone Handling**: All timestamps in PST for consistency
+- **Dual Format Support**: Handles both old and new timestamp formats
+
+### 🎨 UI Improvements
+- **Fixed Chart Display**: Resolved "Invalid Date" issues in star growth charts
+- **Environment Badges**: Clear visual indicators for dev/production
+- **Responsive Design**: Optimized for all screen sizes
+- **Real-time Data**: Automatic data collection and storage
 
 ---
 
 ## Features
 
-- **Tabbed Interface**
-  - **Star Growth Tab:** Visualizes the historical growth in GitHub stars for the Promptfoo repository.
-  - **Pull Request Velocity Tab:** Visualizes the ratio of merged to open pull requests for Promptfoo, helping you understand PR workflow efficiency.
-  - **Real Time Statistics Tab:** Instantly fetch and view the latest star count for any GitHub repository by pasting its URL.
-- **Modern, Colorful UI**
-  - Responsive design, card-based layout, and clear axis labeling.
-  - Left-aligned, descriptive headers and explanations for each graph.
-- **Tooltips and Axis Formatting**
-  - Hover for detailed data; axes are clearly labeled and formatted for readability.
-- **Automated Data Collection**
-  - Background scripts collect star and PR data at regular intervals and store it in SQLite databases.
-- **Manual and Automated Data Entry**
-  - Easily add or update PR velocity data for any day using scripts or manual SQL.
-- **Duplicate Data Handling**
-  - Scripts and queries ensure no duplicate entries for the same day.
-- **Customizable Data Collection Intervals**
-  - Choose between 10 minutes, hourly, or 3-hour intervals for star tracking.
+- **Multi-Environment Support**
+  - **Dev Environment**: Password-protected with "🚧 DEV ENVIRONMENT 🚧" badge
+  - **Production Environment**: Public access with "🚀 PRODUCTION ENVIRONMENT 🚀" badge
+  - **Shared Database**: Both environments use the same DynamoDB tables for consistency
+
+- **Comprehensive Analytics Dashboard**
+  - **Star Growth Chart:** Visualizes historical GitHub star growth with proper timestamp formatting
+  - **Pull Request Velocity Chart:** Shows merged vs open PR ratios over time
+  - **Issue Health Chart:** Displays closed vs open issue ratios
+  - **Package Downloads Chart:** Tracks weekly npm download statistics
+
+- **Real-time Data Collection**
+  - **Automated Scripts**: AWS Lambda functions collect data on scheduled intervals
+  - **EventBridge Rules**: Reliable scheduling for all collection tasks
+  - **DynamoDB Storage**: Scalable cloud database with automatic backups
+
+- **Modern, Responsive UI**
+  - **Tabbed Interface**: Easy navigation between different metrics
+  - **Interactive Charts**: Hover tooltips and zoom capabilities
+  - **Clean Design**: Card-based layout with clear visual hierarchy
+  - **Environment Awareness**: Automatic detection and display of current environment
+
+- **Developer-Friendly**
+  - **GitHub Actions CI/CD**: Automated testing and deployment
+  - **Infrastructure as Code**: AWS CDK for reproducible deployments
+  - **Environment Variables**: Secure token management via AWS Secrets Manager
+  - **Comprehensive Logging**: CloudWatch logs for debugging and monitoring
 
 ---
 
-## Screenshots
+## 🚀 Quick Start - AWS Deployment
 
-### 📊 Promptfoo Tab - Repository Analytics Dashboard
+### Access the Live Application
 
-The main dashboard showing comprehensive metrics for the Promptfoo repository:
+**Production Environment:**
+- **URL**: https://d14l4o1um83q49.cloudfront.net
+- **Features**: Public access, all features available
 
-![Promptfoo Dashboard](https://i.imgur.com/example1.png)
+**Development Environment:**
+- **URL**: https://dci8qqj8zzoob.cloudfront.net
+- **Login**: Username: `dev`, Password: `dev123`
+- **Features**: Password-protected, same functionality as production
 
-**Features shown:**
-- **Star Growth Chart:** Tracks repository popularity over time (7,698 → 7,710 stars)
-- **Pull Request Velocity:** Shows merged vs open PR ratio trends
-- **Issue Health:** Displays closed vs open issue ratios
-- **Modern UI:** Clean card-based layout with responsive design
+### Local Development Setup
 
-### 🔍 Real Time Statistics Tab - Live Repository Lookup
-
-Instant access to any GitHub repository's current metrics:
-
-![Real Time Statistics](https://i.imgur.com/example2.png)
-
-**Features shown:**
-- **Live Star Count:** Fetch current star count for any repository
-- **URL Input:** Support for both `owner/repo` and full GitHub URLs
-- **Instant Results:** Real-time API integration with GitHub
-- **Clean Interface:** Minimalist design with clear call-to-action
-
-> **Note:** Screenshots show the optimized UI with reduced whitespace and improved content density for better user experience.
-
----
-
-## How to Use
-
-### 1. Star Growth Tab
-- View a line graph showing the historical star count for the Promptfoo repository.
-- Each point represents the total number of stars at a specific time.
-- Description below the title explains the graph's purpose.
-
-### 2. Pull Request Velocity Tab
-- View a line graph showing the ratio of merged to open PRs for Promptfoo.
-- Each point represents the ratio on a specific day.
-- Description below the title explains the graph's purpose.
-- X-axis ticks are formatted as "Month Day" (e.g., "July 25").
-
-### 3. Real Time Statistics Tab
-- Enter any GitHub repository URL (e.g., `https://github.com/facebook/react`) in the input box.
-- Click "Fetch Stars" to instantly see the current star count for that repository.
-- Section is clearly labeled "Star Count" for clarity.
-
----
-
-## Quick Start
-
-Want to get the app running in under 1 minute? Follow these steps:
-
-1. **Clone and start:**
+1. **Clone and install:**
    ```bash
    git clone https://github.com/Mihirgupta25/open-source-tracker.git
    cd open-source-tracker
-   ./start.sh
-   ```
-
-2. **Open your browser:**
-   - Go to `http://localhost:3000`
-   - That's it! The app automatically handles everything else
-
-**What you'll see:**
-- Star Growth graph for Promptfoo
-- Pull Request Velocity metrics  
-- Issue Health tracking
-- Real-time star count fetching
-
-> **Note:** For better performance, add a GitHub token to `backend/.env` (see detailed setup below).
-
-**Alternative:** If you prefer manual control, use `npm start` after running `bash setup.sh`.
-
-**Troubleshooting:** If you get a "concurrently: command not found" error, run `npm install` in the root directory to install the required dependencies.
-
----
-
-## Detailed Setup
-
-### Prerequisites
-- Node.js (v16+ recommended)
-- npm or yarn
-
-### Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Mihirgupta25/open-source-tracker.git
-   cd open-source-tracker
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   # Option 1: Use the setup script (recommended)
-   bash setup.sh
-   
-   # Option 2: Manual installation
-   cd backend
-   npm install
-   cd ../frontend
    npm install
    ```
 
-3. **Set up environment variables:**
-   - In `backend/.env`, add your GitHub token for higher API rate limits:
-     ```
-     GITHUB_TOKEN=your_github_token_here
-     ```
-
-4. **Start the backend:**
+2. **Set up AWS credentials:**
    ```bash
-   cd backend
-   node index.js
+   aws configure
+   # Enter your AWS Access Key ID, Secret Access Key, and region (us-east-1)
    ```
 
-5. **Start the frontend:**
+3. **Deploy to dev environment:**
    ```bash
-   cd frontend
-   npm start
+   npm run cdk:dev
    ```
 
-6. **(Optional) Start background data collectors:**
-   - For star growth every 3 hours:
-     ```bash
-     node backend/scripts/star_tracker_3hr.js &
-     ```
-   - For PR velocity daily collection:
-     ```bash
-     node backend/scripts/pr_velocity_daily.js &
-     ```
+4. **Deploy to production:**
+   ```bash
+   npm run cdk:prod
+   ```
 
 ---
 
-## Project Structure
+## 📊 Data Collection Schedule
+
+### Automated Collection Scripts
+
+**Star Growth Collection:**
+- **Frequency**: Every 3 hours starting at 3 AM PST
+- **Next runs**: 6:00 AM, 9:00 AM, 12:00 PM, 3:00 PM, 6:00 PM, 9:00 PM PST
+- **Data**: Current star count for promptfoo/promptfoo repository
+
+**Pull Request Velocity Collection:**
+- **Frequency**: Daily at 11:50 PM PST
+- **Data**: Open and merged PR counts, calculates ratio
+
+**Issue Health Collection:**
+- **Frequency**: Daily at 11:50 PM PST
+- **Data**: Open and closed issue counts, calculates ratio
+
+**Package Downloads Collection:**
+- **Frequency**: Weekly on Sundays at 11:50 PM PST
+- **Data**: Weekly npm download statistics
+
+### Manual Data Management
+
+**View Collection Logs:**
+```bash
+# Check recent star growth collections
+aws logs get-log-events --log-group-name "/aws/lambda/OpenSourceTrackerDevV2-StarGrowthCollectorF1B47D4F-QAc5hVYWDI4G" --log-stream-name "latest"
+
+# Check collection schedules
+aws events list-rules --output json | grep -A 5 "OpenSourceTracker"
+```
+
+**Database Operations:**
+```bash
+# View star growth data
+aws dynamodb scan --table-name dev-star-growth --output json | jq '.Items[] | {timestamp: .timestamp.S, star_count: .star_count.N}'
+
+# Remove duplicate entries
+aws dynamodb delete-item --table-name dev-star-growth --key '{"repo": {"S": "promptfoo/promptfoo"}, "timestamp": {"S": "2025-07-26 19:00:33"}}'
+```
+
+---
+
+## 🏗️ Architecture
+
+### AWS Services Used
+
+**Compute & API:**
+- **AWS Lambda**: Serverless functions for data collection and API handling
+- **API Gateway**: RESTful API endpoints for frontend communication
+- **Lambda@Edge**: Authentication for dev environment
+
+**Storage & Database:**
+- **DynamoDB**: NoSQL database for storing all metrics data
+- **S3**: Static website hosting for the React frontend
+- **Secrets Manager**: Secure storage for GitHub API tokens
+
+**Networking & CDN:**
+- **CloudFront**: Global content delivery network
+- **Route 53**: DNS management (optional for custom domains)
+
+**Orchestration:**
+- **EventBridge**: Scheduled triggers for data collection
+- **CloudWatch**: Logging and monitoring
+- **CloudFormation**: Infrastructure management via CDK
+
+### Environment Structure
+
+```
+AWS Account
+├── Dev Environment (OpenSourceTrackerDevV2)
+│   ├── Frontend: dci8qqj8zzoob.cloudfront.net
+│   ├── API: v7ka0hnhgg.execute-api.us-east-1.amazonaws.com
+│   └── Database: Shared DynamoDB tables
+│
+├── Production Environment (OpenSourceTrackerProdV2)
+│   ├── Frontend: d14l4o1um83q49.cloudfront.net
+│   ├── API: fwaonagbbh.execute-api.us-east-1.amazonaws.com
+│   └── Database: Shared DynamoDB tables
+│
+└── Shared Resources
+    ├── DynamoDB Tables: dev-star-growth, dev-pr-velocity, etc.
+    ├── GitHub Tokens: github-token-dev, github-token-prod
+    └── Lambda Layers: Shared dependencies
+```
+
+---
+
+## 🔧 Development Workflow
+
+### Making Changes
+
+1. **Development Phase:**
+   ```bash
+   # Make your changes to the code
+   git add .
+   git commit -m "Your changes"
+   git push origin develop
+   ```
+
+2. **Automatic Deployment:**
+   - GitHub Actions automatically deploys to dev environment
+   - Test your changes at https://dci8qqj8zzoob.cloudfront.net
+
+3. **Production Deployment:**
+   ```bash
+   # Merge to main branch
+   git checkout main
+   git merge develop
+   git push origin main
+   ```
+   - GitHub Actions automatically deploys to production
+   - Changes go live at https://d14l4o1um83q49.cloudfront.net
+
+### Environment Management
+
+**Dev Environment:**
+- **Purpose**: Testing new features and changes
+- **Access**: Password-protected (dev/dev123)
+- **Deployment**: Automatic on push to `develop` branch
+- **Database**: Shared with production for consistency
+
+**Production Environment:**
+- **Purpose**: Live application for end users
+- **Access**: Public
+- **Deployment**: Automatic on push to `main` branch
+- **Database**: Shared with dev for consistency
+
+---
+
+## 📁 Project Structure
 
 ```
 open-source-tracker/
-  backend/
-    databases/
-      star_growth.db
-      pr_velocity.db
-    scripts/
-      star_tracker_3hr.js
-      pr_velocity_daily.js
-      pr_ratio_historical.js
-      pr_velocity_historical.js
-    index.js
-    ...
-  frontend/
-    src/
-      App.js
-      App.css
-      ...
-    public/
-    README.md
-  ...
+├── infrastructure/           # AWS CDK infrastructure code
+│   ├── bin/app.ts           # CDK app entry point
+│   ├── lib/                 # Stack definitions
+│   └── lambda-edge/         # Lambda@Edge authentication
+├── backend/                 # Backend application
+│   ├── lambda-index.js      # API Gateway Lambda handler
+│   └── scripts/             # Data collection scripts
+│       ├── star-collector.js
+│       ├── pr-collector.js
+│       ├── issue-collector.js
+│       └── package-collector.js
+├── frontend/                # React frontend
+│   ├── src/App.js           # Main application component
+│   └── public/              # Static assets
+├── .github/workflows/       # GitHub Actions CI/CD
+└── package.json             # Project dependencies and scripts
 ```
 
 ---
 
-## Data Collection & Scripts
+## 🛠️ Customization
 
-### Star Growth
-- **Script:** `backend/scripts/star_tracker_3hr.js`
-- **Interval:** Every 3 hours (customizable)
-- **Database:** `backend/databases/star_growth.db`
-- **Table:** `stars` (fields: id, repo, timestamp, count)
-- **How it works:**
-  - Fetches the current star count for Promptfoo from the GitHub API.
-  - Inserts a new row with the timestamp and star count.
+### Changing Collection Schedules
 
-### Pull Request Velocity
-- **Daily Collection:** `backend/scripts/pr_velocity_daily.js`
-  - **Interval:** Every 24 hours at 12:00 PM PST
-  - **Database:** `backend/databases/pr_velocity.db`
-  - **Table:** `pr_ratios` (fields: id, repo, date, merged_count, open_count, ratio)
-  - **How it works:**
-    - Automatically fetches merged and open PR counts for the current day.
-    - Calculates the ratio and inserts it into the database.
-    - Runs continuously every 24 hours.
-- **Historical Scripts:**
-  - `backend/scripts/pr_ratio_historical.js` - For manual historical data collection
-  - `backend/scripts/pr_velocity_historical.js` - For historical PR data
-- **Manual Entry:**
-  - You can insert a row directly using SQLite for custom or test data.
+Edit the CDK configuration in `infrastructure/lib/open-source-tracker-stack.ts`:
 
-### Real Time Statistics
-- **API Endpoint:** `/api/stars?repo=owner/repo`
-- **How it works:**
-  - Fetches the current star count for any GitHub repository using the GitHub API.
-  - Displays the result instantly in the UI.
+```typescript
+// Star growth: every 3 hours starting at 3 AM PST
+const frequentDataCollectionRule = new events.Rule(this, 'FrequentDataCollectionRule', {
+  schedule: events.Schedule.expression('cron(0 11/3 * * ? *)'), // 11 AM UTC = 3 AM PST
+});
 
----
+// PR velocity and issue health: daily at 11:50 PM PST
+const dailyDataCollectionRule = new events.Rule(this, 'DailyDataCollectionRule', {
+  schedule: events.Schedule.expression('cron(50 7 * * ? *)'), // 7:50 AM UTC = 11:50 PM PST
+});
 
-## Customization
+// Package downloads: weekly on Sundays at 11:50 PM PST
+const weeklyDataCollectionRule = new events.Rule(this, 'WeeklyDataCollectionRule', {
+  schedule: events.Schedule.expression('cron(50 7 ? * SUN *)'), // 7:50 AM UTC on Sundays
+});
+```
 
-- **Change Data Collection Interval:**
-  - Edit the `INTERVAL_MINUTES` variable in `backend/scripts/star_tracker_3hr.js` or create a new script for a different interval.
-- **Track a Different Repository:**
-  - Change the `REPO` variable in the scripts to the desired `owner/repo`.
-- **Add More Metrics:**
-  - Extend the backend and frontend to track forks, issues, or other GitHub statistics.
-- **UI Customization:**
-  - Modify `frontend/src/App.css` for colors, spacing, and layout.
+### Adding New Metrics
 
----
+1. **Create Lambda Function:**
+   ```javascript
+   // backend/scripts/new-metric-collector.js
+   exports.handler = async (event) => {
+     // Collect your data
+     // Store in DynamoDB
+     return { statusCode: 200, body: JSON.stringify({ success: true }) };
+   };
+   ```
 
-## Technologies Used
+2. **Add to CDK Stack:**
+   ```typescript
+   const newMetricCollector = new lambda.Function(this, 'NewMetricCollector', {
+     runtime: lambda.Runtime.NODEJS_18_X,
+     handler: 'new-metric-collector.handler',
+     code: lambda.Code.fromAsset('../backend/scripts'),
+   });
+   ```
 
-- **Frontend:** React, Recharts, CSS
-- **Backend:** Node.js, Express, better-sqlite3, Axios
-- **Database:** SQLite
+3. **Update Frontend:**
+   - Add new API endpoint
+   - Create new chart component
+   - Update data fetching logic
 
----
+### Environment Variables
 
-## Contributing
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
-
----
-
-## License
-
-MIT
-
-## Troubleshooting
-
-**Missing Module Errors (e.g., 'better-sqlite3')**
-
-If you see an error like `Error: Cannot find module 'better-sqlite3'` or any other missing dependency error, make sure you have run:
-
+**GitHub Token Management:**
 ```bash
-cd backend
-npm install
-cd ../frontend
-npm install
+# Update dev environment token
+aws secretsmanager update-secret --secret-id github-token-dev --secret-string "your_new_token"
+
+# Update production environment token
+aws secretsmanager update-secret --secret-id github-token-prod --secret-string "your_new_token"
 ```
 
-This will install all required dependencies for both backend and frontend. If you still have issues, try deleting the `node_modules` folder and `package-lock.json` in the affected directory and run `npm install` again.
+---
 
-**AWS DynamoDB Console Shows 0 Items**
+## 🔍 Monitoring & Troubleshooting
 
-If you're using the AWS deployment and the DynamoDB console shows 0 items even though your application is working correctly:
+### Viewing Logs
 
-1. **Verify the correct region**: Make sure you're viewing DynamoDB in the **us-east-1** region (US East - N. Virginia)
-2. **Use the Explore table data feature**:
-   - Go to DynamoDB in us-east-1
-   - Click on any table name (e.g., `dev-star-growth`)
-   - Click the **"Explore table data"** tab
-   - Click **"Run scan"** to see all items
-3. **Alternative method**:
-   - In the table details, click the **"Items"** tab
-   - Click **"Create item"** or **"Scan"** to view existing items
+**Lambda Function Logs:**
+```bash
+# Star growth collector logs
+aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/OpenSourceTrackerDevV2-StarGrowthCollector"
 
-This is a common DynamoDB console display issue due to eventual consistency and caching. Your data is actually there and your application will work correctly even if the console shows 0 items in the table overview.
+# View recent logs
+aws logs get-log-events --log-group-name "/aws/lambda/OpenSourceTrackerDevV2-StarGrowthCollectorF1B47D4F-QAc5hVYWDI4G" --log-stream-name "latest"
+```
+
+**EventBridge Rules:**
+```bash
+# Check collection schedules
+aws events list-rules --output json | grep -A 5 "OpenSourceTracker"
+
+# View rule targets
+aws events list-targets-by-rule --rule OpenSourceTrackerDevV2-FrequentDataCollectionRule5D-wXjXecw3nkB5
+```
+
+### Common Issues
+
+**"Invalid Date" in Charts:**
+- ✅ **Fixed**: Updated timestamp parsing to handle both old and new formats
+- **Cause**: Mixed timestamp formats in database
+- **Solution**: Automatic format detection and conversion
+
+**Duplicate Data Points:**
+- ✅ **Fixed**: Implemented duplicate removal logic
+- **Cause**: Multiple collection runs at similar times
+- **Solution**: Keep latest entry for each date/time
+
+**Environment Indicator Issues:**
+- ✅ **Fixed**: Updated detection logic to use hostname instead of API URL
+- **Cause**: Shared API between environments
+- **Solution**: Detect environment based on CloudFront domain
+
+**Collection Script Failures:**
+- **Check**: CloudWatch logs for Lambda function errors
+- **Common Causes**: GitHub API rate limits, network issues
+- **Solution**: Verify GitHub token permissions and network connectivity
+
+---
+
+## 🤝 Contributing
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes** and test in dev environment
+4. **Commit your changes**: `git commit -m 'Add amazing feature'`
+5. **Push to the branch**: `git push origin feature/amazing-feature`
+6. **Open a Pull Request**
+
+### Development Guidelines
+
+- **Test in dev environment first**: All changes should be tested in the dev environment before production
+- **Follow the deployment workflow**: Use the develop → main branch workflow
+- **Update documentation**: Keep README and inline comments up to date
+- **Monitor logs**: Check CloudWatch logs for any issues after deployment
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **GitHub API**: For providing comprehensive repository data
+- **AWS CDK**: For infrastructure as code capabilities
+- **React & Recharts**: For the beautiful, interactive UI
+- **EventBridge**: For reliable scheduled task execution
+
+---
+
+## 📞 Support
+
+For issues, questions, or contributions:
+- **GitHub Issues**: [Create an issue](https://github.com/Mihirgupta25/open-source-tracker/issues)
+- **Email**: [Your email here]
+- **Documentation**: Check this README and inline code comments
+
+---
+
+*Last updated: July 27, 2025 - AWS deployment with multi-environment support, automated data collection, and enhanced UI features.*

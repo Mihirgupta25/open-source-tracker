@@ -47,7 +47,11 @@ async function fetchPRData(repo, githubToken) {
 
 // Store PR velocity data in DynamoDB
 async function storePRVelocity(repo, openCount, mergedCount) {
-  const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  // Convert to PST timezone
+  const now = new Date();
+  const pstOffset = -8 * 60; // PST is UTC-8
+  const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+  const date = pstTime.toISOString().split('T')[0]; // YYYY-MM-DD format
   const ratio = openCount > 0 ? (mergedCount / openCount).toFixed(2) : 0;
   
   const params = {

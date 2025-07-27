@@ -3,7 +3,7 @@ import './App.css';
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 // API base URL - will use environment variable in production
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://v7ka0hnhgg.execute-api.us-east-1.amazonaws.com/prod';
 
 function App() {
   const [repo, setRepo] = useState('');
@@ -49,11 +49,22 @@ function App() {
         if (Array.isArray(data)) {
           setStarHistory(data.map(d => ({
             ...d,
-            // Format timestamp as 'Month Day, Year, HH:MM AM/PM' (e.g., 'July 25, 2025, 10:12 PM')
-            timestamp: new Date(d.timestamp + 'Z').toLocaleString(undefined, {
-              year: 'numeric', month: 'long', day: 'numeric',
-              hour: '2-digit', minute: '2-digit', hour12: true
-            })
+            // Keep original timestamp for chart, but format for display
+            timestamp: d.timestamp,
+            displayTimestamp: (() => {
+              let dateObj;
+              if (d.timestamp.includes('T') && d.timestamp.includes('Z')) {
+                // Already in ISO format: "2025-07-27T01:00:11.206Z"
+                dateObj = new Date(d.timestamp);
+              } else {
+                // Old format: "2025-07-25 07:20:00"
+                dateObj = new Date(d.timestamp.replace(' ', 'T') + 'Z');
+              }
+              return dateObj.toLocaleString(undefined, {
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: true
+              });
+            })()
           })));
         } else if (data && data.error) {
           setError('Failed to load star history: ' + data.error);
@@ -191,6 +202,39 @@ function App() {
   return (
     <div className="App">
       <h1>Open Source Growth Tracker</h1>
+      {/* Environment Indicator */}
+      {window.location.hostname.includes('dci8qqj8zzoob') && (
+        <div style={{
+          backgroundColor: '#fbbf24',
+          color: '#92400e',
+          padding: '8px 16px',
+          borderRadius: '20px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          display: 'inline-block',
+          marginBottom: '20px',
+          border: '2px solid #f59e0b',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          🚧 DEV ENVIRONMENT 🚧
+        </div>
+      )}
+      {window.location.hostname.includes('d14l4o1um83q49') && (
+        <div style={{
+          backgroundColor: '#10b981',
+          color: '#064e3b',
+          padding: '8px 16px',
+          borderRadius: '20px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          display: 'inline-block',
+          marginBottom: '20px',
+          border: '2px solid #059669',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}>
+          🚀 PRODUCTION ENVIRONMENT 🚀
+        </div>
+      )}
       <div className="tabs">
         <button
           className={activeTab === 'promptfoo' ? 'tab-active' : 'tab'}
@@ -218,6 +262,21 @@ function App() {
                 <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="timestamp"
+                    tickFormatter={timestamp => {
+                      try {
+                        let d;
+                        if (timestamp.includes('T') && timestamp.includes('Z')) {
+                          // Already in ISO format: "2025-07-27T01:00:11.206Z"
+                          d = new Date(timestamp);
+                        } else {
+                          // Old format: "2025-07-25 07:20:00"
+                          d = new Date(timestamp.replace(' ', 'T') + 'Z');
+                        }
+                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+                      } catch (e) {
+                        return timestamp;
+                      }
+                    }}
                     label={{
                       value: 'Time',
                       position: 'insideBottom',
@@ -237,8 +296,22 @@ function App() {
                   {/* Add ReferenceLine for each day change */}
                   {starHistory.length > 1 && starHistory.map((point, idx, arr) => {
                     if (idx === 0) return null;
-                    const prevDate = new Date(arr[idx - 1].timestamp).toDateString();
-                    const currDate = new Date(point.timestamp).toDateString();
+                    const prevTimestamp = arr[idx - 1].timestamp;
+                    const currTimestamp = point.timestamp;
+                    
+                    let prevDate, currDate;
+                    if (prevTimestamp.includes('T') && prevTimestamp.includes('Z')) {
+                      prevDate = new Date(prevTimestamp).toDateString();
+                    } else {
+                      prevDate = new Date(prevTimestamp.replace(' ', 'T') + 'Z').toDateString();
+                    }
+                    
+                    if (currTimestamp.includes('T') && currTimestamp.includes('Z')) {
+                      currDate = new Date(currTimestamp).toDateString();
+                    } else {
+                      currDate = new Date(currTimestamp.replace(' ', 'T') + 'Z').toDateString();
+                    }
+                    
                     if (prevDate !== currDate) {
                       return (
                         <ReferenceLine key={point.timestamp} x={point.timestamp} stroke="#f59e42" strokeDasharray="4 2" label={{ value: currDate, position: 'top', fill: '#f59e42', fontSize: 12, fontWeight: 600 }} />
@@ -246,7 +319,30 @@ function App() {
                     }
                     return null;
                   })}
-                  <Tooltip />
+                  <Tooltip 
+                    labelFormatter={timestamp => {
+                      try {
+                        let d;
+                        if (timestamp.includes('T') && timestamp.includes('Z')) {
+                          // Already in ISO format: "2025-07-27T01:00:11.206Z"
+                          d = new Date(timestamp);
+                        } else {
+                          // Old format: "2025-07-25 07:20:00"
+                          d = new Date(timestamp.replace(' ', 'T') + 'Z');
+                        }
+                        return d.toLocaleString(undefined, { 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric',
+                          hour: '2-digit', 
+                          minute: '2-digit', 
+                          hour12: true 
+                        });
+                      } catch (e) {
+                        return timestamp;
+                      }
+                    }}
+                  />
                   <Line type="monotone" dataKey="count" stroke="#8884d8" dot={false} />
                 </LineChart>
               </ResponsiveContainer>

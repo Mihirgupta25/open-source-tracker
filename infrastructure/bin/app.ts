@@ -12,19 +12,19 @@ const environment = app.node.tryGetContext('environment') || 'dev';
 const envConfigs = {
   dev: {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: 'us-east-1' },
-    stackName: 'OpenSourceTrackerDev',
+    stackName: 'OpenSourceTrackerDevV2',
     domainName: undefined, // No custom domain for dev
     githubTokenSecretName: 'github-token-dev',
-    dataCollectionSchedule: 'cron(0 12 * * ? *)', // Daily at 12 PM UTC
+    dataCollectionSchedule: 'cron(0 */3 * * ? *)', // Every 3 hours starting at 00:00 UTC (4 PM PST)
     useSharedDatabase: true, // Dev uses shared database initially
     sharedDatabaseEnvironment: 'dev', // Use dev tables as the shared database
   },
   prod: {
     env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: 'us-east-1' },
-    stackName: 'OpenSourceTrackerProd',
+    stackName: 'OpenSourceTrackerProdV2',
     domainName: undefined, // Add your custom domain here if needed
     githubTokenSecretName: 'github-token-prod',
-    dataCollectionSchedule: 'cron(0 12 * * ? *)', // Daily at 12 PM UTC
+    dataCollectionSchedule: 'cron(0 */3 * * ? *)', // Every 3 hours starting at 00:00 UTC (4 PM PST)
     useSharedDatabase: true, // Prod uses shared database initially
     sharedDatabaseEnvironment: 'dev', // Use dev tables as the shared database
   }
