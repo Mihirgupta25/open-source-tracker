@@ -4,12 +4,23 @@ A modern web app to track GitHub repository traction metrics, including star gro
 
 ---
 
-## 🌟 New Features (Latest Update)
+## 🌟 Latest Features (Recent Updates)
+
+### 🎨 Enhanced UI Design
+- **Clean Header Layout**: Centered title with GitHub Octocat icon in top right corner
+- **Professional Design**: Matches modern website aesthetics like promptfoo
+- **GitHub Integration**: Direct link to repository via Octocat icon
+- **Environment Indicators**: Dev environment shows indicator, production is clean
+- **Updated Chart Descriptions**: Clean descriptions with informative footnotes
+  - **Star Growth**: "Data is collected from the GitHub API every 3 hours"
+  - **Pull Request Velocity**: "Data is collected from the GitHub API and updates daily at 11:50 PM PST"
+  - **Issue Health**: "Data is collected from the GitHub API and updates daily at 11:50 PM PST"
+  - **Package Downloads**: "Data is collected weekly from the npm Registry API"
 
 ### 🚀 AWS Cloud Deployment
 - **Serverless Architecture**: Lambda functions, DynamoDB, S3, CloudFront, API Gateway
 - **Multi-Environment Setup**: Separate dev and production environments
-- **Environment Indicators**: Visual badges to distinguish dev vs production
+- **Environment Indicators**: Visual badges for dev environment only
 - **Password Protection**: Dev environment requires authentication
 - **Automated CI/CD**: GitHub Actions for seamless deployments
 
@@ -23,7 +34,7 @@ A modern web app to track GitHub repository traction metrics, including star gro
 
 ### 🎨 UI Improvements
 - **Fixed Chart Display**: Resolved "Invalid Date" issues in star growth charts
-- **Environment Badges**: Clear visual indicators for dev/production
+- **Environment Badges**: Clear visual indicators for dev environment only
 - **Responsive Design**: Optimized for all screen sizes
 - **Real-time Data**: Automatic data collection and storage
 
@@ -33,7 +44,7 @@ A modern web app to track GitHub repository traction metrics, including star gro
 
 - **Multi-Environment Support**
   - **Dev Environment**: Password-protected with "🚧 DEV ENVIRONMENT 🚧" badge
-  - **Production Environment**: Public access with "🚀 PRODUCTION ENVIRONMENT 🚀" badge
+  - **Production Environment**: Public access with clean, professional interface
   - **Shared Database**: Both environments use the same DynamoDB tables for consistency
 
 - **Comprehensive Analytics Dashboard**
@@ -52,6 +63,7 @@ A modern web app to track GitHub repository traction metrics, including star gro
   - **Interactive Charts**: Hover tooltips and zoom capabilities
   - **Clean Design**: Card-based layout with clear visual hierarchy
   - **Environment Awareness**: Automatic detection and display of current environment
+  - **GitHub Integration**: Direct repository access via Octocat icon
 
 - **Developer-Friendly**
   - **GitHub Actions CI/CD**: Automated testing and deployment
@@ -67,12 +79,13 @@ A modern web app to track GitHub repository traction metrics, including star gro
 
 **Production Environment:**
 - **URL**: https://d14l4o1um83q49.cloudfront.net
-- **Features**: Public access, all features available
+- **Features**: Public access, clean interface, all features available
 
 **Development Environment:**
 - **URL**: https://dci8qqj8zzoob.cloudfront.net
-- **Login**: Username: `dev`, Password: `dev123`
-- **Features**: Password-protected, same functionality as production
+- **Login**: Username: `dev`, Password: `tracker2024`
+- **Features**: Password-protected, environment indicator, same functionality as production
+- **Security**: Credentials stored in AWS Secrets Manager, not in code
 
 ### Local Development Setup
 
@@ -174,12 +187,14 @@ AWS Account
 ├── Dev Environment (OpenSourceTrackerDevV2)
 │   ├── Frontend: dci8qqj8zzoob.cloudfront.net
 │   ├── API: v7ka0hnhgg.execute-api.us-east-1.amazonaws.com
-│   └── Database: Shared DynamoDB tables
+│   ├── Database: Shared DynamoDB tables
+│   └── Features: Environment indicator, password protection
 │
 ├── Production Environment (OpenSourceTrackerProdV2)
 │   ├── Frontend: d14l4o1um83q49.cloudfront.net
 │   ├── API: fwaonagbbh.execute-api.us-east-1.amazonaws.com
-│   └── Database: Shared DynamoDB tables
+│   ├── Database: Shared DynamoDB tables
+│   └── Features: Clean interface, public access
 │
 └── Shared Resources
     ├── DynamoDB Tables: dev-star-growth, dev-pr-velocity, etc.
@@ -219,15 +234,18 @@ AWS Account
 
 **Dev Environment:**
 - **Purpose**: Testing new features and changes
-- **Access**: Password-protected (dev/dev123)
+- **Access**: Password-protected (dev/tracker2024)
 - **Deployment**: Automatic on push to `develop` branch
 - **Database**: Shared with production for consistency
+- **UI**: Shows environment indicator for testing
+- **Security**: Credentials managed via AWS Secrets Manager
 
 **Production Environment:**
 - **Purpose**: Live application for end users
 - **Access**: Public
 - **Deployment**: Automatic on push to `main` branch
 - **Database**: Shared with dev for consistency
+- **UI**: Clean, professional interface without environment indicators
 
 ---
 
@@ -313,6 +331,18 @@ aws secretsmanager update-secret --secret-id github-token-dev --secret-string "y
 
 # Update production environment token
 aws secretsmanager update-secret --secret-id github-token-prod --secret-string "your_new_token"
+```
+
+**Dev Environment Credentials Management:**
+```bash
+# Set up initial dev credentials
+npm run dev:auth:setup
+
+# Update dev credentials (requires AWS CLI access)
+aws secretsmanager update-secret --secret-id dev-credentials --secret-string '{"username":"dev","password":"your_new_password"}'
+
+# Update credentials in deployment
+npm run dev:auth:update
 ```
 
 ---
@@ -405,4 +435,4 @@ For issues, questions, or contributions:
 
 ---
 
-*Last updated: July 27, 2025 - AWS deployment with multi-environment support, automated data collection, and enhanced UI features.*
+*Last updated: July 27, 2025 - Enhanced UI with GitHub integration, clean production interface, updated chart descriptions and footnotes, and improved user experience.*

@@ -15,6 +15,7 @@ const envConfigs = {
     stackName: 'OpenSourceTrackerDevV2',
     domainName: undefined, // No custom domain for dev
     githubTokenSecretName: 'github-token-dev',
+    devCredentialsSecretName: 'dev-credentials',
     dataCollectionSchedule: 'cron(0 */3 * * ? *)', // Every 3 hours starting at 00:00 UTC (4 PM PST)
     useSharedDatabase: true, // Dev uses shared database initially
     sharedDatabaseEnvironment: 'dev', // Use dev tables as the shared database
@@ -24,6 +25,7 @@ const envConfigs = {
     stackName: 'OpenSourceTrackerProdV2',
     domainName: undefined, // Add your custom domain here if needed
     githubTokenSecretName: 'github-token-prod',
+    devCredentialsSecretName: undefined, // No dev credentials for prod
     dataCollectionSchedule: 'cron(0 */3 * * ? *)', // Every 3 hours starting at 00:00 UTC (4 PM PST)
     useSharedDatabase: true, // Prod uses shared database initially
     sharedDatabaseEnvironment: 'dev', // Use dev tables as the shared database
@@ -40,6 +42,7 @@ new OpenSourceTrackerStack(app, config.stackName, {
   environment,
   domainName: config.domainName,
   githubTokenSecretName: config.githubTokenSecretName,
+  devCredentialsSecretName: config.devCredentialsSecretName,
   dataCollectionSchedule: config.dataCollectionSchedule,
   useSharedDatabase: config.useSharedDatabase,
   sharedDatabaseEnvironment: config.sharedDatabaseEnvironment,

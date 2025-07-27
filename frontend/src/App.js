@@ -44,10 +44,16 @@ function App() {
   useEffect(() => {
     async function fetchHistory() {
       try {
+        if (!window.location.hostname.includes('d14l4o1um83q49')) {
+          console.log('🔄 Fetching star history...');
+        }
         const res = await fetch(`${API_BASE_URL}/api/star-history`);
         const data = await res.json();
+        if (!window.location.hostname.includes('d14l4o1um83q49')) {
+          console.log('📊 Star history raw response:', data);
+        }
         if (Array.isArray(data)) {
-          setStarHistory(data.map(d => ({
+          const processedData = data.map(d => ({
             ...d,
             // Keep original timestamp for chart, but format for display
             timestamp: d.timestamp,
@@ -65,13 +71,26 @@ function App() {
                 hour: '2-digit', minute: '2-digit', hour12: true
               });
             })()
-          })));
+          }));
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.log('📊 Processed star history data:', processedData);
+          }
+          setStarHistory(processedData);
         } else if (data && data.error) {
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.error('📊 Star history error:', data.error);
+          }
           setError('Failed to load star history: ' + data.error);
         } else {
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.error('📊 Unexpected star history response:', data);
+          }
           setError('Failed to load star history: Unexpected response');
         }
       } catch (err) {
+        if (!window.location.hostname.includes('d14l4o1um83q49')) {
+          console.error('📊 Star history fetch error:', err);
+        }
         setError('Failed to load star history: ' + err.message);
       }
     }
@@ -83,10 +102,14 @@ function App() {
       console.log('🔄 Fetching data for promptfoo tab...');
       async function fetchPrVelocity() {
         try {
-          console.log('📈 Fetching PR velocity...');
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.log('📈 Fetching PR velocity...');
+          }
           const res = await fetch(`${API_BASE_URL}/api/pr-velocity`);
           const data = await res.json();
-          console.log('📈 PR velocity response:', data);
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.log('📈 PR velocity raw response:', data);
+          }
           if (Array.isArray(data)) {
             // Remove duplicates by keeping the latest entry for each date
             const byDate = {};
@@ -108,24 +131,34 @@ function App() {
               chartData.push({ date: nextDateStr, ratio: null }); // Only date and ratio: null
             }
 
-            console.log('📈 Setting PR velocity data:', chartData);
+            if (!window.location.hostname.includes('d14l4o1um83q49')) {
+              console.log('📈 Processed PR velocity data:', chartData);
+            }
             setPrVelocity(chartData);
           } else {
-            console.log('📈 No PR velocity data array');
+            if (!window.location.hostname.includes('d14l4o1um83q49')) {
+              console.error('📈 No PR velocity data array, received:', data);
+            }
             setPrVelocity([]);
           }
         } catch (error) {
-          console.error('📈 PR velocity error:', error);
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.error('📈 PR velocity fetch error:', error);
+          }
           setPrVelocity([]);
         }
       }
 
       async function fetchIssueHealth() {
         try {
-          console.log('🐛 Fetching issue health...');
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.log('🐛 Fetching issue health...');
+          }
           const res = await fetch(`${API_BASE_URL}/api/issue-health`);
           const data = await res.json();
-          console.log('🐛 Issue health response:', data);
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.log('🐛 Issue health raw response:', data);
+          }
           if (Array.isArray(data)) {
             // Remove duplicates by keeping the latest entry for each date
             const byDate = {};
@@ -147,22 +180,34 @@ function App() {
               chartData.push({ date: nextDateStr, ratio: null }); // Only date and ratio: null
             }
 
-            console.log('🐛 Setting issue health data:', chartData);
+            if (!window.location.hostname.includes('d14l4o1um83q49')) {
+              console.log('🐛 Processed issue health data:', chartData);
+            }
             setIssueHealth(chartData);
           } else {
-            console.log('🐛 No issue health data array');
+            if (!window.location.hostname.includes('d14l4o1um83q49')) {
+              console.error('🐛 No issue health data array, received:', data);
+            }
             setIssueHealth([]);
           }
         } catch (error) {
-          console.error('🐛 Issue health error:', error);
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.error('🐛 Issue health fetch error:', error);
+          }
           setIssueHealth([]);
         }
       }
 
       async function fetchPackageDownloads() {
         try {
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.log('📦 Fetching package downloads...');
+          }
           const res = await fetch(`${API_BASE_URL}/api/package-downloads`);
           const data = await res.json();
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.log('📦 Package downloads raw response:', data);
+          }
           if (Array.isArray(data)) {
             // Remove duplicates by keeping the latest entry for each week
             const byWeek = {};
@@ -184,11 +229,20 @@ function App() {
               chartData.push({ week_start: nextWeekStr, downloads: null }); // Only week_start and downloads: null
             }
 
+            if (!window.location.hostname.includes('d14l4o1um83q49')) {
+              console.log('📦 Processed package downloads data:', chartData);
+            }
             setPackageDownloads(chartData);
           } else {
+            if (!window.location.hostname.includes('d14l4o1um83q49')) {
+              console.error('📦 No package downloads data array, received:', data);
+            }
             setPackageDownloads([]);
           }
-        } catch {
+        } catch (error) {
+          if (!window.location.hostname.includes('d14l4o1um83q49')) {
+            console.error('📦 Package downloads fetch error:', error);
+          }
           setPackageDownloads([]);
         }
       }
@@ -201,7 +255,61 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Open Source Growth Tracker</h1>
+      {/* Header with GitHub Octocat */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '16px 0',
+        borderBottom: '1px solid #e5e7eb',
+        marginBottom: '24px',
+        position: 'relative'
+      }}>
+        {/* Invisible spacer to balance the GitHub icon */}
+        <div style={{ width: '24px', visibility: 'hidden' }}></div>
+        
+        {/* Centered title */}
+        <h1 style={{ 
+          margin: 0, 
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          textAlign: 'center'
+        }}>
+          Open Source Growth Tracker
+        </h1>
+        
+        {/* GitHub icon on the right */}
+        <a 
+          href="https://github.com/Mihirgupta25/open-source-tracker" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            color: '#000',
+            textDecoration: 'none',
+            fontSize: '24px',
+            transition: 'opacity 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.opacity = '0.7';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.opacity = '1';
+          }}
+        >
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 16 16" 
+            fill="currentColor"
+            style={{ display: 'block' }}
+          >
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+          </svg>
+        </a>
+      </div>
       {/* Environment Indicator */}
       {window.location.hostname.includes('dci8qqj8zzoob') && (
         <div style={{
@@ -219,22 +327,7 @@ function App() {
           🚧 DEV ENVIRONMENT 🚧
         </div>
       )}
-      {window.location.hostname.includes('d14l4o1um83q49') && (
-        <div style={{
-          backgroundColor: '#10b981',
-          color: '#064e3b',
-          padding: '8px 16px',
-          borderRadius: '20px',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          display: 'inline-block',
-          marginBottom: '20px',
-          border: '2px solid #059669',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          🚀 PRODUCTION ENVIRONMENT 🚀
-        </div>
-      )}
+
       <div className="tabs">
         <button
           className={activeTab === 'promptfoo' ? 'tab-active' : 'tab'}
@@ -256,8 +349,16 @@ function App() {
             <div className="card">
               <h2>Star Growth</h2>
               <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
-                This chart visualizes the growth in GitHub stars for the selected repository over time, allowing you to track the project's popularity and community interest. Data is collected from the GitHub API every 3 hours and updates automatically.
+                This chart visualizes the growth in GitHub stars for the selected repository over time.
               </p>
+              <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
+                Data is collected from the GitHub API every 3 hours.
+              </p>
+              {!window.location.hostname.includes('d14l4o1um83q49') && (
+                <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 8 }}>
+                  Debug: {starHistory.length} data points loaded
+                </div>
+              )}
               <ResponsiveContainer width="100%" height={250}>
                 <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -352,11 +453,20 @@ function App() {
           <div className="card">
             <h2>Pull Request Velocity</h2>
             <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
-              This chart visualizes the ratio of merged to open pull requests for the selected repository over time, helping you understand the pace at which pull requests are being merged relative to those remaining open. Data is collected from the GitHub API and updates automatically every day at 11:50 PM PST.
+              This chart visualizes the ratio of merged to open pull requests for the selected repository over time.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
+              Data is collected from the GitHub API and updates daily at 11:50 PM PST.
             </p>
 
             {prVelocity.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
+              <div>
+                {!window.location.hostname.includes('d14l4o1um83q49') && (
+                  <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 8 }}>
+                    Debug: {prVelocity.length} data points loaded
+                  </div>
+                )}
+                <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" 
@@ -397,6 +507,7 @@ function App() {
                   <Line type="monotone" dataKey="ratio" stroke="#f59e42" strokeWidth={3} dot={{ r: 6, fill: "#f59e42" }} />
                 </LineChart>
               </ResponsiveContainer>
+              </div>
             ) : (
               <p style={{ color: '#888', marginTop: 24 }}>No pull request velocity data available.</p>
             )}
@@ -405,11 +516,20 @@ function App() {
           <div className="card">
             <h2>Issue Health</h2>
             <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
-              This chart visualizes the ratio of closed to open issues for the selected repository over time, helping you understand how efficiently issues are being resolved relative to those remaining open. Data is collected from the GitHub API and updates automatically every day at 11:50 PM PST.
+              This chart visualizes the ratio of closed to open issues for the selected repository over time.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
+              Data is collected from the GitHub API and updates daily at 11:50 PM PST.
             </p>
 
             {issueHealth.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
+              <div>
+                {!window.location.hostname.includes('d14l4o1um83q49') && (
+                  <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 8 }}>
+                    Debug: {issueHealth.length} data points loaded
+                  </div>
+                )}
+                <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={issueHealth} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" 
@@ -450,6 +570,7 @@ function App() {
                   <Line type="monotone" dataKey="ratio" stroke="#10b981" strokeWidth={3} dot={{ r: 6, fill: "#10b981" }} />
                 </LineChart>
               </ResponsiveContainer>
+              </div>
             ) : (
               <p style={{ color: '#888', marginTop: 24 }}>No issue health data available.</p>
             )}
@@ -458,11 +579,20 @@ function App() {
           <div className="card">
             <h2>Package Downloads</h2>
             <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
-              This chart visualizes the weekly package download counts for the selected repository over time, helping you track the project's adoption and usage trends. Data is collected from the npm Registry API and updates automatically every week.
+              This chart visualizes the weekly package download counts for the selected repository over time.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
+              Data is collected weekly from the npm Registry API.
             </p>
 
             {packageDownloads.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
+              <div>
+                {!window.location.hostname.includes('d14l4o1um83q49') && (
+                  <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 8 }}>
+                    Debug: {packageDownloads.length} data points loaded
+                  </div>
+                )}
+                <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={packageDownloads} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="week_start" 
@@ -503,6 +633,7 @@ function App() {
                   <Line type="monotone" dataKey="downloads" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 6, fill: "#8b5cf6" }} />
                 </LineChart>
               </ResponsiveContainer>
+              </div>
             ) : (
               <p style={{ color: '#888', marginTop: 24 }}>No package download data available.</p>
             )}

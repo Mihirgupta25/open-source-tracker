@@ -1,80 +1,55 @@
 #!/usr/bin/env node
 
+const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
 
-// Configuration
+// Configure AWS
+AWS.config.update({ region: 'us-east-1' });
+const secretsManager = new AWS.SecretsManager();
+
 const AUTH_FILE = path.join(__dirname, '../infrastructure/lambda-edge/auth-function.js');
-const DEFAULT_USERNAME = 'dev';
 const DEFAULT_PASSWORD = 'tracker2024';
 
-function updateCredentials(username = DEFAULT_USERNAME, password = DEFAULT_PASSWORD) {
-  console.log('🔐 Updating Dev Environment Authentication');
-  console.log(`Username: ${username}`);
-  console.log(`Password: ${password}`);
-  
-  // Read the current auth function
-  let authCode = fs.readFileSync(AUTH_FILE, 'utf8');
-  
-  // Update the credentials in the code
-  authCode = authCode.replace(
-    /username: '([^']+)'/,
-    `username: '${username}'`
-  );
-  authCode = authCode.replace(
-    /password: '([^']+)'/,
-    `password: '${password}'`
-  );
-  
-  // Write the updated code
-  fs.writeFileSync(AUTH_FILE, authCode);
-  
-  console.log('✅ Authentication credentials updated!');
-  console.log('🔄 You need to redeploy the dev environment for changes to take effect:');
-  console.log('   npm run cdk:dev');
-}
+async function updateDevAuth() {
+  try {
+    console.log('🔐 Updating dev environment authentication...');
+    
+    // Get credentials from AWS Secrets Manager
+    let credentials;
+    try {
+      const secretData = await secretsManager.getSecretValue({ SecretId: 'dev-credentials' }).promise();
+      credentials = JSON.parse(secretData.SecretString);
+      console.log('✅ Retrieved credentials from AWS Secrets Manager');
+    } catch (error) {
+      console.log('⚠️  Could not retrieve from Secrets Manager, using default credentials');
+      credentials = {
+        username: 'dev',
+        password: DEFAULT_PASSWORD
+      };
+    }
 
-function showCurrentCredentials() {
-  const authCode = fs.readFileSync(AUTH_FILE, 'utf8');
-  const usernameMatch = authCode.match(/username: '([^']+)'/);
-  const passwordMatch = authCode.match(/password: '([^']+)'/);
-  
-  if (usernameMatch && passwordMatch) {
-    console.log('🔐 Current Dev Environment Credentials:');
-    console.log(`Username: ${usernameMatch[1]}`);
-    console.log(`Password: ${passwordMatch[1]}`);
-  } else {
-    console.log('❌ Could not find current credentials');
+    // Read the current auth function
+    let authFunctionContent = fs.readFileSync(AUTH_FILE, 'utf8');
+    
+    // Update the credentials in the function
+    const updatedContent = authFunctionContent.replace(
+      /username: process\.env\.DEV_USERNAME \|\| 'dev',\s+password: process\.env\.DEV_PASSWORD \|\| 'default_password'/,
+      `username: '${credentials.username}',\n    password: '${credentials.password}'`
+    );
+    
+    // Write the updated content back
+    fs.writeFileSync(AUTH_FILE, updatedContent);
+    
+    console.log('✅ Updated auth function with credentials');
+    console.log(`📝 Username: ${credentials.username}`);
+    console.log(`🔑 Password: ${credentials.password}`);
+    
+  } catch (error) {
+    console.error('❌ Error updating dev auth:', error);
+    process.exit(1);
   }
 }
 
-// Parse command line arguments
-const args = process.argv.slice(2);
-const command = args[0];
-
-switch (command) {
-  case 'update':
-    const username = args[1] || DEFAULT_USERNAME;
-    const password = args[2] || DEFAULT_PASSWORD;
-    updateCredentials(username, password);
-    break;
-    
-  case 'show':
-    showCurrentCredentials();
-    break;
-    
-  default:
-    console.log('🔐 Dev Environment Authentication Manager');
-    console.log('');
-    console.log('Usage:');
-    console.log('  node scripts/update-dev-auth.js show                    # Show current credentials');
-    console.log('  node scripts/update-dev-auth.js update                 # Update with default credentials');
-    console.log('  node scripts/update-dev-auth.js update <user> <pass>   # Update with custom credentials');
-    console.log('');
-    console.log('Default credentials:');
-    console.log(`  Username: ${DEFAULT_USERNAME}`);
-    console.log(`  Password: ${DEFAULT_PASSWORD}`);
-    console.log('');
-    console.log('📝 Note: Changes require redeployment: npm run cdk:dev');
-    break;
-} 
+// Run the update
+updateDevAuth(); 

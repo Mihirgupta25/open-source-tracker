@@ -1,14 +1,14 @@
 'use strict';
 
-// Lambda@Edge doesn't support AWS SDK, so we use hardcoded credentials
+// Lambda@Edge doesn't support AWS SDK, so we use environment variables
+// These will be set during deployment from AWS Secrets Manager
 
-// Get credentials - Lambda@Edge doesn't support environment variables or AWS SDK
-// Using hardcoded credentials for now (can be updated via deployment)
+// Get credentials from environment variables
 function getCredentials() {
-  // These credentials can be updated by redeploying the function
+  // These credentials are set during deployment from AWS Secrets Manager
   return {
-    username: 'dev',
-    password: 'tracker2024'
+    username: process.env.DEV_USERNAME || 'dev',
+    password: process.env.DEV_PASSWORD || 'default_password'
   };
 }
 

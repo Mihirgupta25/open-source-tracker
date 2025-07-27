@@ -17,6 +17,7 @@ export interface OpenSourceTrackerStackProps extends cdk.StackProps {
   environment: string;
   domainName?: string;
   githubTokenSecretName: string;
+  devCredentialsSecretName?: string;
   dataCollectionSchedule: string;
   useSharedDatabase?: boolean;
   sharedDatabaseEnvironment?: string;
@@ -26,7 +27,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: OpenSourceTrackerStackProps) {
     super(scope, id, props);
 
-    const { environment, domainName, githubTokenSecretName, dataCollectionSchedule, useSharedDatabase = false, sharedDatabaseEnvironment = 'prod' } = props;
+    const { environment, domainName, githubTokenSecretName, devCredentialsSecretName, dataCollectionSchedule, useSharedDatabase = false, sharedDatabaseEnvironment = 'prod' } = props;
 
     // DynamoDB Tables
     const tableSuffix = useSharedDatabase ? sharedDatabaseEnvironment : environment;
@@ -94,6 +95,26 @@ export class OpenSourceTrackerStack extends cdk.Stack {
           excludeCharacters: '"@/\\',
         },
       });
+    }
+
+    // Dev Credentials Secret (only for dev environment)
+    let devCredentialsSecret: secretsmanager.ISecret | undefined;
+    if (environment === 'dev' && devCredentialsSecretName) {
+      if (useSharedDatabase && environment !== sharedDatabaseEnvironment) {
+        // Reference existing secret from the shared environment
+        devCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(this, 'DevCredentialsSecret', devCredentialsSecretName);
+      } else {
+        // Create new secret for this environment
+        devCredentialsSecret = new secretsmanager.Secret(this, 'DevCredentialsSecret', {
+          secretName: devCredentialsSecretName,
+          description: `Dev environment credentials for ${environment} environment`,
+          generateSecretString: {
+            secretStringTemplate: JSON.stringify({ username: 'dev', password: '' }),
+            generateStringKey: 'password',
+            excludeCharacters: '"@/\\',
+          },
+        });
+      }
     }
 
     // Lambda Layer for shared dependencies
