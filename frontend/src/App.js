@@ -59,11 +59,8 @@ function App() {
   useEffect(() => {
     async function fetchHistory() {
       try {
-        console.log('🔄 Fetching star history from:', `${API_BASE_URL}/api/star-history`);
-        const res = await fetch(`${API_BASE_URL}/api/star-history`);
-        console.log('📊 Star history response status:', res.status);
-        const data = await res.json();
-        console.log('📊 Star history raw response:', data);
+          const res = await fetch(`${API_BASE_URL}/api/star-history`);
+  const data = await res.json();
         if (Array.isArray(data)) {
           const processedData = data.map(d => ({
             ...d,
@@ -87,11 +84,7 @@ function App() {
               });
             })()
           }));
-          console.log('📊 Processed star history data:', processedData);
-          console.log('📊 Total data points:', processedData.length);
-          console.log('📊 First data point:', processedData[0]);
-          console.log('📊 Last data point:', processedData[processedData.length - 1]);
-          console.log('📊 Setting starHistory state with', processedData.length, 'data points');
+          
           setStarHistory(processedData);
         } else if (data && data.error) {
           console.error('📊 Star history error:', data.error);
@@ -110,16 +103,12 @@ function App() {
 
   useEffect(() => {
     if (activeTab === 'promptfoo') {
-      console.log('🔄 Fetching data for promptfoo tab...');
       async function fetchPrVelocity() {
         try {
-          if (!window.location.hostname.includes('d14l4o1um83q49')) {
-          console.log('📈 Fetching PR velocity...');
-          }
           const res = await fetch(`${API_BASE_URL}/api/pr-velocity`);
           const data = await res.json();
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.log('📈 PR velocity raw response:', data);
+
           }
           if (Array.isArray(data)) {
             // Remove duplicates by keeping the latest entry for each date
@@ -135,13 +124,7 @@ function App() {
               ratio: d.ratio !== undefined ? Number(d.ratio) : 0
             }))];
 
-            console.log('📈 PR velocity data received:', data.length, 'items');
-            console.log('📈 Raw data dates:', data.map(d => d.date));
-            console.log('📈 Raw data with ratios:', data.map(d => ({ date: d.date, ratio: d.ratio })));
-            console.log('📈 Chart data dates:', chartData.map(d => d.date));
-            console.log('📈 Chart data with ratios:', chartData.map(d => ({ date: d.date, ratio: d.ratio })));
-            console.log('📈 Latest PR velocity date:', chartData[chartData.length - 1]?.date);
-            console.log('📈 Processed PR velocity data:', chartData);
+
             setPrVelocity(chartData);
           } else {
             if (!window.location.hostname.includes('d14l4o1um83q49')) {
@@ -160,12 +143,12 @@ function App() {
       async function fetchIssueHealth() {
         try {
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
-          console.log('🐛 Fetching issue health...');
+  
           }
           const res = await fetch(`${API_BASE_URL}/api/issue-health`);
           const data = await res.json();
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.log('🐛 Issue health raw response:', data);
+
           }
           if (Array.isArray(data)) {
             // Remove duplicates by keeping the latest entry for each date
@@ -181,13 +164,7 @@ function App() {
               ratio: d.ratio !== undefined ? Number(d.ratio) : 0
             }))];
 
-            console.log('🐛 Issue health data received:', data.length, 'items');
-            console.log('🐛 Raw data dates:', data.map(d => d.date));
-            console.log('🐛 Raw data with ratios:', data.map(d => ({ date: d.date, ratio: d.ratio })));
-            console.log('🐛 Chart data dates:', chartData.map(d => d.date));
-            console.log('🐛 Chart data with ratios:', chartData.map(d => ({ date: d.date, ratio: d.ratio })));
-            console.log('🐛 Latest issue health date:', chartData[chartData.length - 1]?.date);
-            console.log('🐛 Processed issue health data:', chartData);
+
             setIssueHealth(chartData);
           } else {
             if (!window.location.hostname.includes('d14l4o1um83q49')) {
@@ -206,12 +183,12 @@ function App() {
       async function fetchPackageDownloads() {
         try {
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.log('📦 Fetching package downloads...');
+    
           }
           const res = await fetch(`${API_BASE_URL}/api/package-downloads`);
           const data = await res.json();
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.log('📦 Package downloads raw response:', data);
+
           }
           if (Array.isArray(data)) {
             // Filter out irregular weekly data points and recalculate
@@ -263,7 +240,7 @@ function App() {
             }))];
 
             if (!window.location.hostname.includes('d14l4o1um83q49')) {
-              console.log('📦 Processed package downloads data:', chartData);
+  
             }
             setPackageDownloads(chartData);
           } else {
@@ -323,19 +300,6 @@ function App() {
       
       setPrVelocityCategories(categories);
       setPrVelocitySeries(series);
-      
-      console.log('🔍 PR Velocity Helper Arrays Updated:', {
-        originalDataLength: prVelocity.length,
-        originalDataDates: prVelocity.map(d => d.date),
-        originalDataRatios: prVelocity.map(d => d.ratio),
-        categoriesLength: categories.length,
-        categories: categories,
-        seriesLength: series.length,
-        series: series,
-        lastOriginalDate: prVelocity[prVelocity.length - 1]?.date,
-        lastCategory: categories[categories.length - 1],
-        lastSeriesValue: series[series.length - 1]
-      });
     }
   }, [prVelocity]);
 
@@ -375,19 +339,6 @@ function App() {
       
       setIssueHealthCategories(categories);
       setIssueHealthSeries(series);
-      
-      console.log('🔍 Issue Health Helper Arrays Updated:', {
-        originalDataLength: issueHealth.length,
-        originalDataDates: issueHealth.map(d => d.date),
-        originalDataRatios: issueHealth.map(d => d.ratio),
-        categoriesLength: categories.length,
-        categories: categories,
-        seriesLength: series.length,
-        series: series,
-        lastOriginalDate: issueHealth[issueHealth.length - 1]?.date,
-        lastCategory: categories[categories.length - 1],
-        lastSeriesValue: series[series.length - 1]
-      });
     }
   }, [issueHealth]);
 

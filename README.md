@@ -1,361 +1,151 @@
-# Open Source Growth Tracker
+# 🌟 Open Source Growth Tracker
 
-A modern web app to track GitHub repository traction metrics, including star growth, pull request velocity, issue health, and package downloads, with a beautiful and intuitive UI. Now deployed on AWS with separate staging and production environments.
+> **Track your GitHub repository's growth with beautiful, real-time analytics**
 
----
+A modern web application that automatically collects and visualizes key metrics for open source projects, including star growth, pull request velocity, issue health, and package downloads. Built with React, AWS, and deployed with automated CI/CD.
 
-## 🌟 Latest Features (Recent Updates)
-
-### 🎨 Enhanced UI Design
-- **Clean Header Layout**: Centered title with GitHub Octocat icon in top right corner
-- **Professional Design**: Matches modern website aesthetics like promptfoo
-- **GitHub Integration**: Direct link to repository via Octocat icon
-- **Environment Indicators**: Staging environment shows indicator, production is clean
-- **Updated Chart Descriptions**: Clean descriptions with informative footnotes
-  - **Star Growth**: "Data is collected from the GitHub API every 3 hours"
-  - **Pull Request Velocity**: "Data is collected from the GitHub API and updates daily at 11:50 PM PST"
-  - **Issue Health**: "Data is collected from the GitHub API and updates daily at 11:50 PM PST"
-  - **Package Downloads**: "Data is collected weekly from the npm Registry API"
-
-### 🚀 AWS Cloud Deployment
-- **Serverless Architecture**: Lambda functions, DynamoDB, S3, CloudFront, API Gateway
-- **Multi-Environment Setup**: Separate staging and production environments
-- **Environment Indicators**: Visual badges for staging environment only
-- **Password Protection**: Staging environment requires authentication
-- **Automated CI/CD**: GitHub Actions for seamless deployments
-
-### 📊 Enhanced Data Collection
-- **Smart Scheduling**: Different collection frequencies for different metrics
-  - **Star Growth**: Every 3 hours starting at 3:00 AM PDT (updated from 12:00 AM PST)
-  - **PR Velocity & Issue Health**: Daily at 11:50 PM PST
-  - **Package Downloads**: Weekly on Sundays at 11:50 PM PST
-- **Timezone Handling**: All timestamps in PST for consistency
-- **Dual Format Support**: Handles both old and new timestamp formats
-
-### 🎨 Chart Library Migration & Improvements
-- **ApexCharts Integration**: Migrated from Recharts/Chart.js to ApexCharts for better reliability
-- **Enhanced Date Formatting**: Proper month/day/year format for x-axis labels
-- **Improved Data Visibility**: Fixed issues with last data points not showing
-- **Thicker Lines & Points**: Better visual representation of data trends
-- **Debug-Free Production**: Clean production environment without debug statements
-- **Environment-Aware API**: Automatic detection of staging vs production environments
-
-### 🔧 Technical Improvements
-- **Environment Detection**: Automatic API endpoint selection based on hostname
-- **Data Point Visibility**: Fixed July 27th data visibility issues across all charts
-- **Package Downloads Logic**: Corrected weekly calculation and date representation
-- **Timezone Consistency**: Proper handling of PST/PDT timezone conversions
-- **Error Handling**: Improved error handling and user feedback
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-blue?style=for-the-badge)](https://d14l4o1um83q49.cloudfront.net)
+[![Staging](https://img.shields.io/badge/Staging-Testing-orange?style=for-the-badge)](https://d1j9ixntt6x51n.cloudfront.net)
 
 ---
 
-## Features
+## 🚀 Quick Start
 
-- **Multi-Environment Support**
-  - **Staging Environment**: Password-protected with "🚧 STAGING ENVIRONMENT 🚧" badge
-  - **Production Environment**: Public access with clean, professional interface
-  - **Shared Database**: Both environments use the same DynamoDB tables for consistency
-  - **Environment Detection**: Automatic API endpoint selection based on CloudFront domain
+### Try It Now
+- **🌐 Production**: [https://d14l4o1um83q49.cloudfront.net](https://d14l4o1um83q49.cloudfront.net) (Public access)
+- **🧪 Staging**: [https://d1j9ixntt6x51n.cloudfront.net](https://d1j9ixntt6x51n.cloudfront.net) (Login: `dev` / `tracker2024`)
 
-- **Comprehensive Analytics Dashboard**
-  - **Star Growth Chart:** Visualizes historical GitHub star growth with proper timestamp formatting
-  - **Pull Request Velocity Chart:** Shows merged vs open PR ratios over time
-  - **Issue Health Chart:** Displays closed vs open issue ratios
-  - **Package Downloads Chart:** Tracks weekly npm download statistics with week-end date representation
-
-- **Real-time Data Collection**
-  - **Automated Scripts**: AWS Lambda functions collect data on scheduled intervals
-  - **EventBridge Rules**: Reliable scheduling for all collection tasks
-  - **DynamoDB Storage**: Scalable cloud database with automatic backups
-  - **Updated Schedule**: Star growth now collects every 3 hours starting at 3:00 AM PDT
-
-- **Modern, Responsive UI**
-  - **Tabbed Interface**: Easy navigation between different metrics
-  - **Interactive Charts**: Hover tooltips and zoom capabilities using ApexCharts
-  - **Clean Design**: Card-based layout with clear visual hierarchy
-  - **Environment Awareness**: Automatic detection and display of current environment
-  - **GitHub Integration**: Direct repository access via Octocat icon
-  - **Debug-Free Production**: Clean production interface without development debug information
-
-- **Developer-Friendly**
-  - **GitHub Actions CI/CD**: Automated testing and deployment
-  - **Infrastructure as Code**: AWS CDK for reproducible deployments
-  - **Environment Variables**: Secure token management via AWS Secrets Manager
-  - **Comprehensive Logging**: CloudWatch logs for debugging and monitoring
+### What You'll See
+- 📈 **Star Growth**: Real-time GitHub star tracking every 3 hours
+- 🔄 **PR Velocity**: Daily pull request merge ratios
+- 🏥 **Issue Health**: Daily issue resolution metrics  
+- 📦 **Package Downloads**: Weekly npm download statistics
 
 ---
 
-## 🚀 Quick Start - AWS Deployment
+## ✨ Features
 
-### Access the Live Application
+### 📊 Real-Time Analytics
+- **Automated Data Collection**: AWS Lambda functions collect data on scheduled intervals
+- **Beautiful Visualizations**: Interactive charts with hover tooltips and zoom capabilities
+- **Multi-Environment Support**: Separate staging and production environments
+- **Environment Detection**: Automatic API endpoint selection
 
-**Production Environment:**
-- **URL**: https://d14l4o1um83q49.cloudfront.net
-- **Features**: Public access, clean interface, all features available, no debug information
+### 🏗️ Modern Architecture
+- **Serverless**: AWS Lambda, DynamoDB, S3, CloudFront, API Gateway
+- **Scalable**: EventBridge scheduling, CloudWatch monitoring
+- **Secure**: AWS Secrets Manager for token management
+- **Automated**: GitHub Actions CI/CD pipeline
 
-**Staging Environment:**
-- **URL**: https://d1j9ixntt6x51n.cloudfront.net
-- **Login**: Username: `dev`, Password: `tracker2024`
-- **Features**: Password-protected, environment indicator, same functionality as production
-- **Security**: Credentials stored in AWS Secrets Manager, not in code
-
-### Local Development Setup
-
-1. **Clone and install:**
-   ```bash
-   git clone https://github.com/Mihirgupta25/open-source-tracker.git
-   cd open-source-tracker
-   npm install
-   ```
-
-2. **Set up AWS credentials:**
-   ```bash
-   aws configure
-   # Enter your AWS Access Key ID, Secret Access Key, and region (us-east-1)
-   ```
-
-3. **Deploy to staging environment:**
-   ```bash
-   npm run cdk:staging
-   ```
-
-4. **Deploy to production:**
-   ```bash
-   npm run cdk:prod
-   ```
+### 🎨 User Experience
+- **Clean Design**: Card-based layout with professional aesthetics
+- **Responsive**: Works on desktop, tablet, and mobile
+- **Interactive**: Tabbed interface for easy navigation
+- **GitHub Integration**: Direct repository access via Octocat icon
 
 ---
 
-## 📊 Data Collection Schedule
+## 📋 Data Collection Schedule
 
-### Automated Collection Scripts
+| Metric | Frequency | Time | Description |
+|--------|-----------|------|-------------|
+| ⭐ Star Growth | Every 3 hours | Starting 3:00 AM PDT | Current GitHub star count |
+| 🔄 PR Velocity | Daily | 11:50 PM PST | Merged vs open PR ratios |
+| 🏥 Issue Health | Daily | 11:50 PM PST | Closed vs open issue ratios |
+| 📦 Package Downloads | Weekly | Sundays 11:50 PM PST | npm download statistics |
 
-**Star Growth Collection:**
-- **Frequency**: Every 3 hours starting at 3:00 AM PDT (10:00 AM UTC)
-- **Next runs**: 6:00 AM, 9:00 AM, 12:00 PM, 3:00 PM, 6:00 PM, 9:00 PM PDT
-- **Data**: Current star count for promptfoo/promptfoo repository
-- **Recent Update**: Schedule changed from 12:00 AM PST to 3:00 AM PDT for better coverage
+---
 
-**Pull Request Velocity Collection:**
-- **Frequency**: Daily at 11:50 PM PST
-- **Data**: Open and merged PR counts, calculates ratio
+## 🛠️ Development Setup
 
-**Issue Health Collection:**
-- **Frequency**: Daily at 11:50 PM PST
-- **Data**: Open and closed issue counts, calculates ratio
+### Prerequisites
+- Node.js 18+
+- AWS CLI configured
+- GitHub account
 
-**Package Downloads Collection:**
-- **Frequency**: Weekly on Sundays at 11:50 PM PST
-- **Data**: Weekly npm download statistics with week-end date representation
-
-### Manual Data Management
-
-**View Collection Logs:**
+### Local Development
 ```bash
-# Check recent star growth collections
-aws logs get-log-events --log-group-name "/aws/lambda/OpenSourceTrackerDevV2-StarGrowthCollectorF1B47D4F-QAc5hVYWDI4G" --log-stream-name "latest"
+# Clone the repository
+git clone https://github.com/Mihirgupta25/open-source-tracker.git
+cd open-source-tracker
 
-# Check collection schedules
-aws events list-rules --output json | grep -A 5 "OpenSourceTracker"
+# Install dependencies
+npm install
+
+# Start development server
+npm start
 ```
 
-**Database Operations:**
+### AWS Deployment
 ```bash
-# View star growth data
-aws dynamodb scan --table-name dev-star-growth --output json | jq '.Items[] | {timestamp: .timestamp.S, star_count: .star_count.N}'
+# Deploy to staging
+npm run cdk:staging
 
-# Remove duplicate entries
-aws dynamodb delete-item --table-name dev-star-growth --key '{"repo": {"S": "promptfoo/promptfoo"}, "timestamp": {"S": "2025-07-26 19:00:33"}}'
+# Deploy to production  
+npm run cdk:prod
 ```
 
 ---
 
 ## 🏗️ Architecture
 
-### AWS Services Used
+For detailed information about our system architecture, data flow, and environment separation, see our **[Architecture Documentation](ARCHITECTURE.md)**.
 
-**Compute & API:**
-- **AWS Lambda**: Serverless functions for data collection and API handling
-- **API Gateway**: RESTful API endpoints for frontend communication
-- **Lambda@Edge**: Authentication for staging environment
-
-**Storage & Database:**
-- **DynamoDB**: NoSQL database for storing all metrics data
-- **S3**: Static website hosting for the React frontend
-- **Secrets Manager**: Secure storage for GitHub API tokens
-
-**Networking & CDN:**
-- **CloudFront**: Global content delivery network
-- **Route 53**: DNS management (optional for custom domains)
-
-**Orchestration:**
-- **EventBridge**: Scheduled triggers for data collection
-- **CloudWatch**: Logging and monitoring
-- **CloudFormation**: Infrastructure management via CDK
-
-### Environment Structure
-
-```
-AWS Account
-├── Staging Environment (OpenSourceTrackerStagingV2)
-│   ├── Frontend: d1j9ixntt6x51n.cloudfront.net
-│   ├── API: k3wr4zoexk.execute-api.us-east-1.amazonaws.com
-│   ├── Database: Shared DynamoDB tables
-│   └── Features: Environment indicator, password protection
-│
-├── Production Environment (OpenSourceTrackerProdV2)
-│   ├── Frontend: d14l4o1um83q49.cloudfront.net
-│   ├── API: fwaonagbbh.execute-api.us-east-1.amazonaws.com
-│   ├── Database: Shared DynamoDB tables
-│   └── Features: Clean interface, public access, no debug info
-│
-└── Shared Resources
-    ├── DynamoDB Tables: dev-star-growth, dev-pr-velocity, etc.
-    ├── GitHub Tokens: github-token-dev, github-token-prod
-    └── Lambda Layers: Shared dependencies
-```
+### Quick Overview
+- **Frontend**: React app served via CloudFront CDN
+- **Backend**: Serverless Lambda functions with API Gateway
+- **Database**: DynamoDB with separate staging/production tables
+- **Scheduling**: EventBridge for automated data collection
+- **Security**: AWS Secrets Manager for token management
 
 ---
 
-## 🔧 Development Workflow
+## 🔧 Customization
 
-### Making Changes
-
-1. **Development Phase:**
-   ```bash
-   # Make your changes to the code
-   git add .
-   git commit -m "Your changes"
-   git push origin develop
-   ```
-
-2. **Automatic Deployment:**
-   - GitHub Actions automatically deploys to staging environment
-   - Test your changes at https://d1j9ixntt6x51n.cloudfront.net
-
-3. **Production Deployment:**
-   ```bash
-   # Merge to main branch
-   git checkout main
-   git merge develop
-   git push origin main
-   ```
-   - GitHub Actions automatically deploys to production
-   - Changes go live at https://d14l4o1um83q49.cloudfront.net
-
-### Environment Management
-
-**Staging Environment:**
-- **Purpose**: Testing new features and changes
-- **Access**: Password-protected (dev/tracker2024)
-- **Deployment**: Automatic on push to `develop` branch
-- **Database**: Shared with production for consistency
-- **UI**: Shows environment indicator for testing
-- **Security**: Credentials managed via AWS Secrets Manager
-
-**Production Environment:**
-- **Purpose**: Live application for end users
-- **Access**: Public
-- **Deployment**: Automatic on push to `main` branch
-- **Database**: Shared with dev for consistency
-- **UI**: Clean, professional interface without environment indicators or debug information
-
----
-
-## 📁 Project Structure
-
-```
-open-source-tracker/
-├── infrastructure/           # AWS CDK infrastructure code
-│   ├── bin/app.ts           # CDK app entry point
-│   ├── lib/                 # Stack definitions
-│   └── lambda-edge/         # Lambda@Edge authentication
-├── backend/                 # Backend application
-│   ├── lambda-index.js      # API Gateway Lambda handler
-│   └── scripts/             # Data collection scripts
-│       ├── star-collector.js
-│       ├── pr-collector.js
-│       ├── issue-collector.js
-│       └── package-collector.js
-├── frontend/                # React frontend
-│   ├── src/App.js           # Main application component with ApexCharts
-│   └── public/              # Static assets
-├── .github/workflows/       # GitHub Actions CI/CD
-└── package.json             # Project dependencies and scripts
-```
-
----
-
-## 🛠️ Customization
+### Adding New Metrics
+1. Create a new Lambda function in `backend/scripts/`
+2. Add EventBridge rule for scheduling
+3. Update the frontend with new chart component
+4. Deploy via GitHub Actions
 
 ### Changing Collection Schedules
-
 Edit the CDK configuration in `infrastructure/lib/open-source-tracker-stack.ts`:
 
 ```typescript
-// Star growth: every 3 hours starting at 3 AM PDT
+// Example: Change star growth to every 6 hours
 const frequentDataCollectionRule = new events.Rule(this, 'FrequentDataCollectionRule', {
-  schedule: events.Schedule.expression('cron(0 10/3 * * ? *)'), // 10 AM UTC = 3 AM PDT
-});
-
-// PR velocity and issue health: daily at 11:50 PM PST
-const dailyDataCollectionRule = new events.Rule(this, 'DailyDataCollectionRule', {
-  schedule: events.Schedule.expression('cron(50 7 * * ? *)'), // 7:50 AM UTC = 11:50 PM PST
-});
-
-// Package downloads: weekly on Sundays at 11:50 PM PST
-const weeklyDataCollectionRule = new events.Rule(this, 'WeeklyDataCollectionRule', {
-  schedule: events.Schedule.expression('cron(50 7 ? * SUN *)'), // 7:50 AM UTC on Sundays
+  schedule: events.Schedule.expression('cron(0 */6 * * ? *)'),
 });
 ```
-
-### Adding New Metrics
-
-1. **Create Lambda Function:**
-   ```javascript
-   // backend/scripts/new-metric-collector.js
-   exports.handler = async (event) => {
-     // Collect your data
-     // Store in DynamoDB
-     return { statusCode: 200, body: JSON.stringify({ success: true }) };
-   };
-   ```
-
-2. **Add to CDK Stack:**
-   ```typescript
-   const newMetricCollector = new lambda.Function(this, 'NewMetricCollector', {
-     runtime: lambda.Runtime.NODEJS_18_X,
-     handler: 'new-metric-collector.handler',
-     code: lambda.Code.fromAsset('../backend/scripts'),
-   });
-   ```
-
-3. **Update Frontend:**
-   - Add new API endpoint
-   - Create new chart component using ApexCharts
-   - Update data fetching logic
 
 ### Environment Variables
-
-**GitHub Token Management:**
 ```bash
-# Update staging environment token
-aws secretsmanager update-secret --secret-id github-token-staging --secret-string "your_new_token"
+# Update GitHub tokens
+aws secretsmanager update-secret --secret-id github-token-prod --secret-string "your_token"
 
-# Update production environment token
-aws secretsmanager update-secret --secret-id github-token-prod --secret-string "your_new_token"
+# Update staging credentials
+aws secretsmanager update-secret --secret-id staging-credentials --secret-string '{"username":"dev","password":"new_password"}'
 ```
 
-**Staging Environment Credentials Management:**
+---
+
+## 🚀 Deployment
+
+### Automated CI/CD
+- **Push to `main`**: Automatically deploys to production
+- **Manual dispatch**: Choose staging or production environment
+- **GitHub Actions**: Runs tests, builds, and deploys
+
+### Manual Deployment
 ```bash
-# Set up initial staging credentials
-npm run staging:auth:setup
+# Deploy infrastructure
+cd infrastructure
+npm run build
+cdk deploy --context environment=prod
 
-# Update staging credentials (requires AWS CLI access)
-aws secretsmanager update-secret --secret-id staging-credentials --secret-string '{"username":"dev","password":"your_new_password"}'
-
-# Update credentials in deployment
-npm run staging:auth:update
+# Deploy frontend
+npm run build
+aws s3 sync frontend/build/ s3://your-bucket-name --delete
 ```
 
 ---
@@ -363,76 +153,38 @@ npm run staging:auth:update
 ## 🔍 Monitoring & Troubleshooting
 
 ### Viewing Logs
-
-**Lambda Function Logs:**
 ```bash
-# Star growth collector logs
-aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/OpenSourceTrackerDevV2-StarGrowthCollector"
+# Lambda function logs
+aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/OpenSourceTracker"
 
-# View recent logs
-aws logs get-log-events --log-group-name "/aws/lambda/OpenSourceTrackerDevV2-StarGrowthCollectorF1B47D4F-QAc5hVYWDI4G" --log-stream-name "latest"
-```
-
-**EventBridge Rules:**
-```bash
-# Check collection schedules
-aws events list-rules --output json | grep -A 5 "OpenSourceTracker"
-
-# View rule targets
-aws events list-targets-by-rule --rule OpenSourceTrackerDevV2-FrequentDataCollectionRule5D-wXjXecw3nkB5
+# EventBridge rules
+aws events list-rules --name-prefix "OpenSourceTracker"
 ```
 
 ### Common Issues
-
-**"Invalid Date" in Charts:**
-- ✅ **Fixed**: Updated timestamp parsing to handle both old and new formats
-- **Cause**: Mixed timestamp formats in database
-- **Solution**: Automatic format detection and conversion
-
-**Duplicate Data Points:**
-- ✅ **Fixed**: Implemented duplicate removal logic
-- **Cause**: Multiple collection runs at similar times
-- **Solution**: Keep latest entry for each date/time
-
-**Environment Indicator Issues:**
-- ✅ **Fixed**: Updated detection logic to use hostname instead of API URL
-- **Cause**: Shared API between environments
-- **Solution**: Detect environment based on CloudFront domain
-
-**Collection Script Failures:**
-- **Check**: CloudWatch logs for Lambda function errors
-- **Common Causes**: GitHub API rate limits, network issues
-- **Solution**: Verify GitHub token permissions and network connectivity
-
-**Chart Library Migration Issues:**
-- ✅ **Fixed**: Migrated from Recharts/Chart.js to ApexCharts
-- **Cause**: Compatibility issues with React 19.1.0
-- **Solution**: ApexCharts provides better stability and features
-
-**Data Point Visibility Issues:**
-- ✅ **Fixed**: July 27th data now visible on all charts
-- **Cause**: Chart rendering issues with last data points
-- **Solution**: Improved data processing and chart configuration
+- **"Invalid Date" in charts**: Fixed with automatic timestamp format detection
+- **Duplicate data points**: Implemented duplicate removal logic
+- **Environment detection**: Updated to use CloudFront domain detection
 
 ---
 
 ## 🤝 Contributing
 
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** and test in staging environment
-4. **Commit your changes**: `git commit -m 'Add amazing feature'`
-5. **Push to the branch**: `git push origin feature/amazing-feature`
-6. **Open a Pull Request**
+We welcome contributions! Here's how to get started:
+
+1. **Fork** the repository
+2. **Create** a feature branch: `git checkout -b feature/amazing-feature`
+3. **Make** your changes and test in staging
+4. **Commit** your changes: `git commit -m 'Add amazing feature'`
+5. **Push** to your branch: `git push origin feature/amazing-feature`
+6. **Open** a Pull Request
 
 ### Development Guidelines
-
-- **Test in staging environment first**: All changes should be tested in the staging environment before production
-- **Follow the deployment workflow**: Use the develop → main branch workflow
-- **Update documentation**: Keep README and inline comments up to date
-- **Monitor logs**: Check CloudWatch logs for any issues after deployment
-- **Chart library consistency**: Use ApexCharts for new chart components
-- **Environment detection**: Ensure proper API endpoint selection for staging vs production
+- Test in staging environment first
+- Follow the main branch workflow
+- Update documentation
+- Monitor CloudWatch logs
+- Use ApexCharts for new charts
 
 ---
 
@@ -444,20 +196,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **GitHub API**: For providing comprehensive repository data
-- **AWS CDK**: For infrastructure as code capabilities
-- **React & ApexCharts**: For the beautiful, interactive UI
-- **EventBridge**: For reliable scheduled task execution
+- **GitHub API**: For comprehensive repository data
+- **AWS CDK**: For infrastructure as code
+- **React & ApexCharts**: For beautiful UI
+- **EventBridge**: For reliable scheduling
 
 ---
 
 ## 📞 Support
 
-For issues, questions, or contributions:
 - **GitHub Issues**: [Create an issue](https://github.com/Mihirgupta25/open-source-tracker/issues)
-- **Email**: [Your email here]
 - **Documentation**: Check this README and inline code comments
+- **Live Demo**: [Production](https://d14l4o1um83q49.cloudfront.net) | [Staging](https://d1j9ixntt6x51n.cloudfront.net)
 
 ---
 
-*Last updated: July 28, 2025 - Enhanced UI with GitHub integration, clean production interface, updated chart descriptions and footnotes, migrated to ApexCharts, fixed data visibility issues, updated star growth collection schedule to 3:00 AM PDT, and improved user experience with environment-aware API endpoints.*
+*Last updated: July 28, 2025 - Enhanced UI with GitHub integration, clean production interface, updated chart descriptions, migrated to ApexCharts, and improved user experience.*
