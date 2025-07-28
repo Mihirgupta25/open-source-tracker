@@ -8,7 +8,7 @@ const secretsManager = new AWS.SecretsManager();
 
 async function setupDevCredentials() {
   try {
-    console.log('🔐 Setting up dev environment credentials in AWS Secrets Manager...');
+    console.log('🔐 Setting up staging environment credentials in AWS Secrets Manager...');
     
     // Default credentials
     const credentials = {
@@ -18,28 +18,28 @@ async function setupDevCredentials() {
     
     // Check if secret already exists
     try {
-      await secretsManager.describeSecret({ SecretId: 'dev-credentials' }).promise();
+      await secretsManager.describeSecret({ SecretId: 'staging-credentials' }).promise();
       console.log('⚠️  Secret already exists, updating...');
       
       // Update existing secret
       await secretsManager.updateSecret({
-        SecretId: 'dev-credentials',
+        SecretId: 'staging-credentials',
         SecretString: JSON.stringify(credentials)
       }).promise();
       
-      console.log('✅ Updated existing dev credentials secret');
+      console.log('✅ Updated existing staging credentials secret');
     } catch (error) {
       if (error.code === 'ResourceNotFoundException') {
-        console.log('📝 Creating new dev credentials secret...');
+        console.log('📝 Creating new staging credentials secret...');
         
         // Create new secret
         await secretsManager.createSecret({
-          Name: 'dev-credentials',
-          Description: 'Dev environment credentials for Open Source Tracker',
+          Name: 'staging-credentials',
+          Description: 'Staging environment credentials for Open Source Tracker',
           SecretString: JSON.stringify(credentials)
         }).promise();
         
-        console.log('✅ Created new dev credentials secret');
+        console.log('✅ Created new staging credentials secret');
       } else {
         throw error;
       }
@@ -50,7 +50,7 @@ async function setupDevCredentials() {
     console.log(`   Password: ${credentials.password}`);
     console.log('');
     console.log('🔄 Next steps:');
-    console.log('   1. Deploy the dev environment: npm run cdk:dev');
+    console.log('   1. Deploy the staging environment: npm run cdk:staging');
     console.log('   2. The credentials will be automatically updated during deployment');
     
   } catch (error) {

@@ -13,12 +13,12 @@ const DEFAULT_PASSWORD = 'tracker2024';
 
 async function updateDevAuth() {
   try {
-    console.log('🔐 Updating dev environment authentication...');
+    console.log('🔐 Updating staging environment authentication...');
     
     // Get credentials from AWS Secrets Manager
     let credentials;
     try {
-      const secretData = await secretsManager.getSecretValue({ SecretId: 'dev-credentials' }).promise();
+      const secretData = await secretsManager.getSecretValue({ SecretId: 'staging-credentials' }).promise();
       credentials = JSON.parse(secretData.SecretString);
       console.log('✅ Retrieved credentials from AWS Secrets Manager');
     } catch (error) {

@@ -36,8 +36,8 @@ cd infrastructure && npm install && cd ..
 ### Option A: Automated Deployment (Recommended)
 
 ```bash
-# Deploy dev environment
-./deploy.sh dev
+# Deploy staging environment
+./deploy.sh staging
 
 # Deploy prod environment  
 ./deploy.sh prod

@@ -208,12 +208,12 @@ show_deployment_info() {
 
 # Main script
 main() {
-    local environment=${1:-dev}
+    local environment=${1:-staging}
     local github_token=$2
     
-    if [ "$environment" != "dev" ] && [ "$environment" != "prod" ]; then
-        print_error "Environment must be 'dev' or 'prod'"
-        echo "Usage: $0 [dev|prod] [github_token]"
+    if [ "$environment" != "staging" ] && [ "$environment" != "prod" ]; then
+        print_error "Environment must be 'staging' or 'prod'"
+        echo "Usage: $0 [staging|prod] [github_token]"
         exit 1
     fi
     

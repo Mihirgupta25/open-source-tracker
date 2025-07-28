@@ -1,6 +1,6 @@
 # AWS Deployment Guide
 
-This guide will help you deploy the Open Source Tracker application to AWS using a serverless architecture with separate dev and prod environments.
+This guide will help you deploy the Open Source Tracker application to AWS using a serverless architecture with separate staging and prod environments.
 
 ## Architecture Overview
 
@@ -15,7 +15,7 @@ The application is deployed using AWS CDK with the following components:
 - **Secrets Manager**: Secure storage for GitHub API tokens
 
 ### Environment Separation
-- **Dev Environment**: For development and testing
+- **Staging Environment**: For development and testing
 - **Prod Environment**: For production use
 - Each environment has its own resources and configurations
 
@@ -40,14 +40,14 @@ The application is deployed using AWS CDK with the following components:
 ### Option 1: Automated Deployment Script
 
 ```bash
-# Deploy dev environment
-./deploy.sh dev
+# Deploy staging environment
+./deploy.sh staging
 
 # Deploy prod environment
 ./deploy.sh prod
 
 # Deploy with GitHub token
-./deploy.sh dev your_github_token_here
+./deploy.sh staging your_github_token_here
 ```
 
 ### Option 2: Manual Deployment
@@ -60,10 +60,10 @@ cd infrastructure && npm install && cd ..
 # Build the application
 cd frontend && npm run build && cd ..
 
-# Deploy dev environment
+# Deploy staging environment
 cd infrastructure
 npm run build
-cdk deploy --context environment=dev
+cdk deploy --context environment=staging
 
 # Deploy prod environment
 cdk deploy --context environment=prod
@@ -71,11 +71,11 @@ cdk deploy --context environment=prod
 
 ## Environment Configuration
 
-### Dev Environment
+### Staging Environment
 - **Region**: us-east-1
 - **Data Collection**: Daily at 12 PM UTC
 - **Resource Retention**: Destroy on stack deletion
-- **GitHub Token Secret**: `github-token-dev`
+- **GitHub Token Secret**: `github-token-staging`
 
 ### Prod Environment
 - **Region**: us-east-1

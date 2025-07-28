@@ -46,10 +46,10 @@ jobs:
       run: |
         cd frontend && npm run build && cd ..
 
-  deploy-dev:
+  deploy-staging:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev')
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     
     steps:
     - uses: actions/checkout@v4
@@ -78,30 +78,30 @@ jobs:
       run: |
         cd frontend && npm run build && cd ..
     
-    - name: Deploy to AWS (Dev)
+    - name: Deploy to AWS (Staging)
       run: |
         cd infrastructure
         npm run build
-        cdk deploy --context environment=dev --require-approval never
+        cdk deploy --context environment=staging --require-approval never
         cd ..
     
     - name: Upload frontend to S3
       run: |
         BUCKET_NAME=$(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerDev" \
+          --stack-name "OpenSourceTrackerStaging" \
           --query 'Stacks[0].Outputs[?OutputKey==`FrontendBucketName`].OutputValue' \
           --output text)
         aws s3 sync frontend/build/ s3://$BUCKET_NAME/ --delete
     
     - name: Get deployment info
       run: |
-        echo "Dev Environment Deployed Successfully!"
+        echo "Staging Environment Deployed Successfully!"
         echo "API Endpoint: $(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerDev" \
+          --stack-name "OpenSourceTrackerStaging" \
           --query 'Stacks[0].Outputs[?OutputKey==`APIEndpoint`].OutputValue' \
           --output text)"
         echo "Frontend URL: https://$(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerDev" \
+          --stack-name "OpenSourceTrackerStaging" \
           --query 'Stacks[0].Outputs[?OutputKey==`FrontendURL`].OutputValue' \
           --output text)"
     
@@ -117,7 +117,7 @@ jobs:
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: `🚀 **Dev Deployment Complete!**
+            body: `🚀 **Staging Deployment Complete!**
             
             **Frontend:** https://dcujo2wk56am6.cloudfront.net
             **API:** https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod

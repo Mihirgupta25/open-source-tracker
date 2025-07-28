@@ -240,9 +240,9 @@ class OpenSourceTrackerStack extends cdk.Stack {
         }));
         // Use S3Origin with proper configuration
         const s3Origin = new origins.S3Origin(frontendBucket);
-        // Lambda@Edge function for dev environment authentication
-        let authFunction;
-        if (environment === 'dev') {
+            // Lambda@Edge function for staging environment authentication
+    let authFunction;
+    if (environment === 'staging') {
             authFunction = new lambda.Function(this, 'AuthFunction', {
                 runtime: lambda.Runtime.NODEJS_18_X,
                 handler: 'auth-function.handler',
@@ -257,7 +257,7 @@ class OpenSourceTrackerStack extends cdk.Stack {
                 origin: s3Origin,
                 viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-                ...(environment === 'dev' && authFunction ? {
+                ...(environment === 'staging' && authFunction ? {
                     edgeLambdas: [{
                             functionVersion: authFunction.currentVersion,
                             eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,

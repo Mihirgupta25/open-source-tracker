@@ -7,8 +7,8 @@
 function getCredentials() {
   // These credentials are set during deployment from AWS Secrets Manager
   return {
-    username: process.env.DEV_USERNAME || 'dev',
-    password: process.env.DEV_PASSWORD || 'default_password'
+    username: 'dev',
+    password: 'tracker2024'
   };
 }
 
@@ -47,7 +47,7 @@ exports.handler = async (event) => {
         headers: {
             'www-authenticate': [{
                 key: 'WWW-Authenticate',
-                value: 'Basic realm="Dev Environment"'
+                value: 'Basic realm="Staging Environment"'
             }],
             'content-type': [{
                 key: 'Content-Type',
@@ -67,10 +67,10 @@ exports.handler = async (event) => {
         </head>
         <body>
             <div class="container">
-                <h2>🔒 Dev Environment Access</h2>
+                <h2>🔒 Staging Environment Access</h2>
                 <div class="error">
                     <p><strong>Authentication Required</strong></p>
-                    <p>This is a protected development environment.</p>
+                    <p>This is a protected staging environment.</p>
                     <p>Please enter your credentials to continue.</p>
                 </div>
                 <p><small>Contact your administrator for access credentials.</small></p>

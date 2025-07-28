@@ -44,7 +44,13 @@ async function storeStarCount(repo, starCount) {
   const now = new Date();
   const pstOffset = -8 * 60; // PST is UTC-8
   const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
-  const timestamp = pstTime.toISOString();
+  
+  // Format as "month day, year" (e.g., "July 25, 2025")
+  const timestamp = pstTime.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
   
   const params = {
     TableName: STAR_GROWTH_TABLE,

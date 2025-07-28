@@ -43,11 +43,15 @@ async function fetchPackageDownloads(packageName) {
 
 // Store package downloads data in DynamoDB
 async function storePackageDownloads(repo, downloads) {
-  // Convert to PST timezone
+  // Convert to PST timezone and calculate proper weekly intervals
   const now = new Date();
   const pstOffset = -8 * 60; // PST is UTC-8
   const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
-  const weekStart = new Date(pstTime.getFullYear(), pstTime.getMonth(), pstTime.getDate() - pstTime.getDay());
+  
+  // Calculate the start of the current week (Monday)
+  const dayOfWeek = pstTime.getDay();
+  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday = 0, so convert to Monday = 0
+  const weekStart = new Date(pstTime.getFullYear(), pstTime.getMonth(), pstTime.getDate() - daysToMonday);
   const weekStartStr = weekStart.toISOString().split('T')[0]; // YYYY-MM-DD format
   
   const params = {

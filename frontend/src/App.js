@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from 'recharts';
+import ReactApexChart from 'react-apexcharts';
 
-// API base URL - will use environment variable in production
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://v7ka0hnhgg.execute-api.us-east-1.amazonaws.com/prod';
+// API base URL - detect environment and use appropriate endpoint
+const getApiBaseUrl = () => {
+  // Check if we're on staging environment
+  if (window.location.hostname.includes('d1j9ixntt6x51n')) {
+    return 'https://fwaonagbbh.execute-api.us-east-1.amazonaws.com/staging';
+  }
+  // Default to production
+  return process.env.REACT_APP_API_URL || 'https://fwaonagbbh.execute-api.us-east-1.amazonaws.com/prod';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 function App() {
   const [repo, setRepo] = useState('');
@@ -15,6 +24,12 @@ function App() {
   const [prVelocity, setPrVelocity] = useState([]);
   const [issueHealth, setIssueHealth] = useState([]);
   const [packageDownloads, setPackageDownloads] = useState([]);
+  
+  // State for helper arrays
+  const [prVelocityCategories, setPrVelocityCategories] = useState([]);
+  const [prVelocitySeries, setPrVelocitySeries] = useState([]);
+  const [issueHealthCategories, setIssueHealthCategories] = useState([]);
+  const [issueHealthSeries, setIssueHealthSeries] = useState([]);
 
   function parseRepo(input) {
     const match = input.match(/github\.com\/(.+?\/[^\/?#]+)/);
@@ -44,14 +59,11 @@ function App() {
   useEffect(() => {
     async function fetchHistory() {
       try {
-        if (!window.location.hostname.includes('d14l4o1um83q49')) {
-          console.log('🔄 Fetching star history...');
-        }
+        console.log('🔄 Fetching star history from:', `${API_BASE_URL}/api/star-history`);
         const res = await fetch(`${API_BASE_URL}/api/star-history`);
+        console.log('📊 Star history response status:', res.status);
         const data = await res.json();
-        if (!window.location.hostname.includes('d14l4o1um83q49')) {
-          console.log('📊 Star history raw response:', data);
-        }
+        console.log('📊 Star history raw response:', data);
         if (Array.isArray(data)) {
           const processedData = data.map(d => ({
             ...d,
@@ -60,11 +72,14 @@ function App() {
             displayTimestamp: (() => {
               let dateObj;
               if (d.timestamp.includes('T') && d.timestamp.includes('Z')) {
-                // Already in ISO format: "2025-07-27T01:00:11.206Z"
+                // ISO format: "2025-07-27T01:00:11.206Z"
+                dateObj = new Date(d.timestamp);
+              } else if (d.timestamp.includes(',') && d.timestamp.includes(' ')) {
+                // New format: "July 25, 2025"
                 dateObj = new Date(d.timestamp);
               } else {
-                // Old format: "2025-07-25 07:20:00"
-                dateObj = new Date(d.timestamp.replace(' ', 'T') + 'Z');
+                // Old format: "2025-07-25 07:20:00" - treat as local time
+                dateObj = new Date(d.timestamp.replace(' ', 'T'));
               }
               return dateObj.toLocaleString(undefined, {
                 year: 'numeric', month: 'long', day: 'numeric',
@@ -72,25 +87,21 @@ function App() {
               });
             })()
           }));
-          if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.log('📊 Processed star history data:', processedData);
-          }
+          console.log('📊 Processed star history data:', processedData);
+          console.log('📊 Total data points:', processedData.length);
+          console.log('📊 First data point:', processedData[0]);
+          console.log('📊 Last data point:', processedData[processedData.length - 1]);
+          console.log('📊 Setting starHistory state with', processedData.length, 'data points');
           setStarHistory(processedData);
         } else if (data && data.error) {
-          if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.error('📊 Star history error:', data.error);
-          }
+          console.error('📊 Star history error:', data.error);
           setError('Failed to load star history: ' + data.error);
         } else {
-          if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.error('📊 Unexpected star history response:', data);
-          }
+          console.error('📊 Unexpected star history response:', data);
           setError('Failed to load star history: Unexpected response');
         }
       } catch (err) {
-        if (!window.location.hostname.includes('d14l4o1um83q49')) {
-          console.error('📊 Star history fetch error:', err);
-        }
+        console.error('📊 Star history fetch error:', err);
         setError('Failed to load star history: ' + err.message);
       }
     }
@@ -103,7 +114,7 @@ function App() {
       async function fetchPrVelocity() {
         try {
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.log('📈 Fetching PR velocity...');
+          console.log('📈 Fetching PR velocity...');
           }
           const res = await fetch(`${API_BASE_URL}/api/pr-velocity`);
           const data = await res.json();
@@ -117,23 +128,20 @@ function App() {
               byDate[d.date] = d; // Keep the latest entry for each date
             });
             const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
-            // Add a dummy data point for the next day to ensure the last point is visible
+            // Create chart data without dummy point to ensure all real data is visible
             let chartData = [...sorted.map(d => ({
               ...d,
               date: d.date,
               ratio: d.ratio !== undefined ? Number(d.ratio) : 0
             }))];
-            if (chartData.length > 0) {
-              const lastDate = new Date(chartData[chartData.length - 1].date + 'T00:00:00Z');
-              const nextDate = new Date(lastDate);
-              nextDate.setDate(lastDate.getDate() + 1);
-              const nextDateStr = nextDate.toISOString().slice(0, 10);
-              chartData.push({ date: nextDateStr, ratio: null }); // Only date and ratio: null
-            }
 
-            if (!window.location.hostname.includes('d14l4o1um83q49')) {
-              console.log('📈 Processed PR velocity data:', chartData);
-            }
+            console.log('📈 PR velocity data received:', data.length, 'items');
+            console.log('📈 Raw data dates:', data.map(d => d.date));
+            console.log('📈 Raw data with ratios:', data.map(d => ({ date: d.date, ratio: d.ratio })));
+            console.log('📈 Chart data dates:', chartData.map(d => d.date));
+            console.log('📈 Chart data with ratios:', chartData.map(d => ({ date: d.date, ratio: d.ratio })));
+            console.log('📈 Latest PR velocity date:', chartData[chartData.length - 1]?.date);
+            console.log('📈 Processed PR velocity data:', chartData);
             setPrVelocity(chartData);
           } else {
             if (!window.location.hostname.includes('d14l4o1um83q49')) {
@@ -152,7 +160,7 @@ function App() {
       async function fetchIssueHealth() {
         try {
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
-            console.log('🐛 Fetching issue health...');
+          console.log('🐛 Fetching issue health...');
           }
           const res = await fetch(`${API_BASE_URL}/api/issue-health`);
           const data = await res.json();
@@ -166,23 +174,20 @@ function App() {
               byDate[d.date] = d; // Keep the latest entry for each date
             });
             const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
-            // Add a dummy data point for the next day to ensure the last point is visible
+            // Create chart data without dummy point to ensure all real data is visible
             let chartData = [...sorted.map(d => ({
               ...d,
               date: d.date,
               ratio: d.ratio !== undefined ? Number(d.ratio) : 0
             }))];
-            if (chartData.length > 0) {
-              const lastDate = new Date(chartData[chartData.length - 1].date + 'T00:00:00Z');
-              const nextDate = new Date(lastDate);
-              nextDate.setDate(lastDate.getDate() + 1);
-              const nextDateStr = nextDate.toISOString().slice(0, 10);
-              chartData.push({ date: nextDateStr, ratio: null }); // Only date and ratio: null
-            }
 
-            if (!window.location.hostname.includes('d14l4o1um83q49')) {
-              console.log('🐛 Processed issue health data:', chartData);
-            }
+            console.log('🐛 Issue health data received:', data.length, 'items');
+            console.log('🐛 Raw data dates:', data.map(d => d.date));
+            console.log('🐛 Raw data with ratios:', data.map(d => ({ date: d.date, ratio: d.ratio })));
+            console.log('🐛 Chart data dates:', chartData.map(d => d.date));
+            console.log('🐛 Chart data with ratios:', chartData.map(d => ({ date: d.date, ratio: d.ratio })));
+            console.log('🐛 Latest issue health date:', chartData[chartData.length - 1]?.date);
+            console.log('🐛 Processed issue health data:', chartData);
             setIssueHealth(chartData);
           } else {
             if (!window.location.hostname.includes('d14l4o1um83q49')) {
@@ -209,25 +214,53 @@ function App() {
             console.log('📦 Package downloads raw response:', data);
           }
           if (Array.isArray(data)) {
+            // Filter out irregular weekly data points and recalculate
+            const filteredData = data.filter(d => {
+              // Remove only the truly irregular dates: 2025-07-20, 2025-07-22
+              // Keep 2025-07-27 as it's a proper week ending date
+              const irregularDates = ['2025-07-20', '2025-07-22'];
+              return !irregularDates.includes(d.week_start);
+            });
+            
             // Remove duplicates by keeping the latest entry for each week
             const byWeek = {};
-            data.forEach(d => {
+            filteredData.forEach(d => {
               byWeek[d.week_start] = d; // Keep the latest entry for each week
             });
             const sorted = Object.values(byWeek).sort((a, b) => a.week_start.localeCompare(b.week_start));
-            // Add a dummy data point for the next week to ensure the last point is visible
+            
+            // Convert week_start dates to week_end dates to match the graph pattern
+            // Each date should represent the end of the week, not the start
+            const convertedData = sorted.map(d => {
+              const weekStart = new Date(d.week_start);
+              const weekEnd = new Date(weekStart);
+              weekEnd.setDate(weekStart.getDate() + 6); // Add 6 days to get to end of week
+              const weekEndStr = weekEnd.toISOString().split('T')[0];
+              
+              return {
+                ...d,
+                week_start: weekEndStr // Use week_end as the display date
+              };
+            });
+            
+            // Replace sorted with converted data and filter out future dates
+            sorted.length = 0;
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            
+            convertedData.forEach(d => {
+              // Only include dates that are today or in the past
+              if (d.week_start <= todayStr) {
+                sorted.push(d);
+              }
+            });
+            
+            // Create chart data without adding future dummy points
             let chartData = [...sorted.map(d => ({
               ...d,
               week_start: d.week_start,
               downloads: d.downloads !== undefined ? Number(d.downloads) : 0
             }))];
-            if (chartData.length > 0) {
-              const lastWeek = new Date(chartData[chartData.length - 1].week_start + 'T00:00:00Z');
-              const nextWeek = new Date(lastWeek);
-              nextWeek.setDate(lastWeek.getDate() + 7);
-              const nextWeekStr = nextWeek.toISOString().slice(0, 10);
-              chartData.push({ week_start: nextWeekStr, downloads: null }); // Only week_start and downloads: null
-            }
 
             if (!window.location.hostname.includes('d14l4o1um83q49')) {
               console.log('📦 Processed package downloads data:', chartData);
@@ -252,6 +285,111 @@ function App() {
       fetchPackageDownloads();
     }
   }, [activeTab]);
+
+  // Update helper arrays when data changes
+  useEffect(() => {
+    if (prVelocity.length > 0) {
+      const categories = prVelocity.map(d => {
+        // Use the date string directly to avoid timezone issues
+        const dateParts = d.date.split('-');
+        const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      });
+      const series = prVelocity.map(d => d.ratio);
+      
+      // Add padding points (avoid duplicates)
+      if (categories.length > 0) {
+        const lastDate = new Date(prVelocity[prVelocity.length - 1].date);
+        for (let i = 1; i <= 3; i++) {
+          const paddingDate = new Date(lastDate);
+          paddingDate.setDate(lastDate.getDate() + i);
+          const paddingDateString = paddingDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+          
+          // Only add if it's not already in the categories array
+          if (!categories.includes(paddingDateString)) {
+            categories.push(paddingDateString);
+            series.push(null);
+          }
+        }
+      }
+      
+      setPrVelocityCategories(categories);
+      setPrVelocitySeries(series);
+      
+      console.log('🔍 PR Velocity Helper Arrays Updated:', {
+        originalDataLength: prVelocity.length,
+        originalDataDates: prVelocity.map(d => d.date),
+        originalDataRatios: prVelocity.map(d => d.ratio),
+        categoriesLength: categories.length,
+        categories: categories,
+        seriesLength: series.length,
+        series: series,
+        lastOriginalDate: prVelocity[prVelocity.length - 1]?.date,
+        lastCategory: categories[categories.length - 1],
+        lastSeriesValue: series[series.length - 1]
+      });
+    }
+  }, [prVelocity]);
+
+  useEffect(() => {
+    if (issueHealth.length > 0) {
+      const categories = issueHealth.map(d => {
+        // Use the date string directly to avoid timezone issues
+        const dateParts = d.date.split('-');
+        const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      });
+      const series = issueHealth.map(d => d.ratio);
+      
+      // Add padding points (avoid duplicates)
+      if (categories.length > 0) {
+        const lastDate = new Date(issueHealth[issueHealth.length - 1].date);
+        for (let i = 1; i <= 3; i++) {
+          const paddingDate = new Date(lastDate);
+          paddingDate.setDate(lastDate.getDate() + i);
+          const paddingDateString = paddingDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          });
+          
+          // Only add if it's not already in the categories array
+          if (!categories.includes(paddingDateString)) {
+            categories.push(paddingDateString);
+            series.push(null);
+          }
+        }
+      }
+      
+      setIssueHealthCategories(categories);
+      setIssueHealthSeries(series);
+      
+      console.log('🔍 Issue Health Helper Arrays Updated:', {
+        originalDataLength: issueHealth.length,
+        originalDataDates: issueHealth.map(d => d.date),
+        originalDataRatios: issueHealth.map(d => d.ratio),
+        categoriesLength: categories.length,
+        categories: categories,
+        seriesLength: series.length,
+        series: series,
+        lastOriginalDate: issueHealth[issueHealth.length - 1]?.date,
+        lastCategory: categories[categories.length - 1],
+        lastSeriesValue: series[series.length - 1]
+      });
+    }
+  }, [issueHealth]);
 
   return (
     <div className="App">
@@ -311,7 +449,7 @@ function App() {
         </a>
       </div>
       {/* Environment Indicator */}
-      {window.location.hostname.includes('dci8qqj8zzoob') && (
+      {window.location.hostname.includes('d1j9ixntt6x51n') && (
         <div style={{
           backgroundColor: '#fbbf24',
           color: '#92400e',
@@ -324,7 +462,7 @@ function App() {
           border: '2px solid #f59e0b',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          🚧 DEV ENVIRONMENT 🚧
+          🚧 STAGING ENVIRONMENT 🚧
         </div>
       )}
 
@@ -345,7 +483,7 @@ function App() {
       </div>
       {activeTab === 'promptfoo' && (
         <>
-          {starHistory.length > 0 && (
+          {starHistory.length > 0 ? (
             <div className="card">
               <h2>Star Growth</h2>
               <p style={{ fontSize: '1rem', color: '#3b3b5c', marginBottom: 12, textAlign: 'left' }}>
@@ -354,99 +492,78 @@ function App() {
               <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
                 Data is collected from the GitHub API every 3 hours.
               </p>
-              {!window.location.hostname.includes('d14l4o1um83q49') && (
-                <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 8 }}>
-                  Debug: {starHistory.length} data points loaded
-                </div>
-              )}
-              <ResponsiveContainer width="100%" height={250}>
-                <LineChart data={starHistory} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="timestamp"
-                    tickFormatter={timestamp => {
-                      try {
-                        let d;
-                        if (timestamp.includes('T') && timestamp.includes('Z')) {
-                          // Already in ISO format: "2025-07-27T01:00:11.206Z"
-                          d = new Date(timestamp);
-                        } else {
-                          // Old format: "2025-07-25 07:20:00"
-                          d = new Date(timestamp.replace(' ', 'T') + 'Z');
+
+                <div style={{ height: '250px', width: '100%' }}>
+                  <ReactApexChart
+                    options={{
+                      chart: {
+                        type: 'line',
+                        height: 250,
+                        toolbar: {
+                          show: false
                         }
-                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-                      } catch (e) {
-                        return timestamp;
-                      }
-                    }}
-                    label={{
-                      value: 'Time',
-                      position: 'insideBottom',
-                      dy: 20,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
-                  />
-                  <YAxis domain={['auto', 'auto']} 
-                    label={{
-                      value: 'Stars',
-                      position: 'insideLeft',
-                      dy: -20,
-                      dx: -15,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
-                  />
-                  {/* Add ReferenceLine for each day change */}
-                  {starHistory.length > 1 && starHistory.map((point, idx, arr) => {
-                    if (idx === 0) return null;
-                    const prevTimestamp = arr[idx - 1].timestamp;
-                    const currTimestamp = point.timestamp;
-                    
-                    let prevDate, currDate;
-                    if (prevTimestamp.includes('T') && prevTimestamp.includes('Z')) {
-                      prevDate = new Date(prevTimestamp).toDateString();
-                    } else {
-                      prevDate = new Date(prevTimestamp.replace(' ', 'T') + 'Z').toDateString();
-                    }
-                    
-                    if (currTimestamp.includes('T') && currTimestamp.includes('Z')) {
-                      currDate = new Date(currTimestamp).toDateString();
-                    } else {
-                      currDate = new Date(currTimestamp.replace(' ', 'T') + 'Z').toDateString();
-                    }
-                    
-                    if (prevDate !== currDate) {
-                      return (
-                        <ReferenceLine key={point.timestamp} x={point.timestamp} stroke="#f59e42" strokeDasharray="4 2" label={{ value: currDate, position: 'top', fill: '#f59e42', fontSize: 12, fontWeight: 600 }} />
-                      );
-                    }
-                    return null;
-                  })}
-                  <Tooltip 
-                    labelFormatter={timestamp => {
-                      try {
-                        let d;
-                        if (timestamp.includes('T') && timestamp.includes('Z')) {
-                          // Already in ISO format: "2025-07-27T01:00:11.206Z"
-                          d = new Date(timestamp);
-                        } else {
-                          // Old format: "2025-07-25 07:20:00"
-                          d = new Date(timestamp.replace(' ', 'T') + 'Z');
-                        }
-                        return d.toLocaleString(undefined, { 
-                          year: 'numeric', 
-                          month: 'long', 
+                      },
+                      stroke: {
+                        curve: 'smooth',
+                        width: 4
+                      },
+                      colors: ['#8884d8'],
+                      xaxis: {
+                        categories: starHistory.map(d => {
+                          const date = new Date(d.timestamp.replace(' ', 'T'));
+                          return date.toLocaleString('en-US', {
+                            month: 'short',
                           day: 'numeric',
                           hour: '2-digit', 
                           minute: '2-digit', 
                           hour12: true 
                         });
-                      } catch (e) {
-                        return timestamp;
+                        }),
+                        labels: {
+                          style: {
+                            colors: '#666'
+                          }
+                        }
+                      },
+                      yaxis: {
+                        labels: {
+                          style: {
+                            colors: '#666'
+                          },
+                          formatter: function(value) {
+                            return Math.round(value).toLocaleString();
+                          }
+                        }
+                      },
+                      grid: {
+                        borderColor: '#e1e1e1',
+                        strokeDashArray: 3
+                      },
+                      markers: {
+                        size: 4,
+                        colors: ['#8884d8'],
+                        strokeColors: '#8884d8',
+                        strokeWidth: 2
+                      },
+                      tooltip: {
+                        theme: 'light'
                       }
                     }}
+                    series={[{
+                      name: 'Star Count',
+                      data: starHistory.map(d => d.count)
+                    }]}
+                    type="line"
+                    height={250}
                   />
-                  <Line type="monotone" dataKey="count" stroke="#8884d8" dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+                </div>
+            </div>
+          ) : (
+            <div className="card">
+              <h2>Star Growth</h2>
+              <p style={{ color: '#888', marginTop: 24 }}>
+                Loading star growth data... {starHistory.length === 0 ? '(No data loaded)' : `(${starHistory.length} points)`}
+              </p>
             </div>
           )}
           {/* Pull Request Velocity Section */}
@@ -461,52 +578,63 @@ function App() {
 
             {prVelocity.length > 0 ? (
               <div>
-                {!window.location.hostname.includes('d14l4o1um83q49') && (
-                  <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 8 }}>
-                    Debug: {prVelocity.length} data points loaded
-                  </div>
-                )}
-                <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={prVelocity} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" 
-                    tickFormatter={date => {
-                      try {
-                        const d = new Date(date + 'T12:00:00Z');
-                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                      } catch (e) {
-                        return date;
+                <div style={{ height: '250px', width: '100%' }}>
+                  <ReactApexChart
+                    options={{
+                      chart: {
+                        type: 'line',
+                        height: 250,
+                        toolbar: {
+                          show: false
+                        }
+                      },
+                      stroke: {
+                        curve: 'smooth',
+                        width: 4
+                      },
+                      colors: ['#f59e42'],
+                      xaxis: {
+                        categories: prVelocityCategories,
+                        labels: {
+                          style: {
+                            colors: '#666'
+                          }
+                        },
+                        tickAmount: prVelocityCategories.length + 1
+                      },
+                      yaxis: {
+                        labels: {
+                          style: {
+                            colors: '#666'
+                          },
+                          formatter: function(value) {
+                            return value.toFixed(2);
+                          }
+                        }
+                      },
+                      grid: {
+                        borderColor: '#e1e1e1',
+                        strokeDashArray: 3
+                      },
+                      markers: {
+                        size: 6,
+                        colors: ['#f59e42'],
+                        strokeColors: '#f59e42',
+                        strokeWidth: 2
+                      },
+                      tooltip: {
+                        theme: 'light'
                       }
                     }}
-                    label={{
-                      value: 'Date',
-                      position: 'insideBottom',
-                      dy: 20,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
+                    series={[{
+                      name: 'PR Velocity Ratio',
+                      data: prVelocitySeries
+                    }]}
+                    type="line"
+                    height={250}
+
                   />
-                  <YAxis 
-                    label={{
-                      value: 'Ratio',
-                      position: 'insideLeft',
-                      dy: -20,
-                      dx: -15,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
-                  />
-                  <Tooltip 
-                    labelFormatter={date => {
-                      try {
-                        const d = new Date(date + 'T12:00:00Z');
-                        return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-                      } catch (e) {
-                        return date;
-                      }
-                    }}
-                  />
-                  <Line type="monotone" dataKey="ratio" stroke="#f59e42" strokeWidth={3} dot={{ r: 6, fill: "#f59e42" }} />
-                </LineChart>
-              </ResponsiveContainer>
+                </div>
               </div>
             ) : (
               <p style={{ color: '#888', marginTop: 24 }}>No pull request velocity data available.</p>
@@ -524,52 +652,63 @@ function App() {
 
             {issueHealth.length > 0 ? (
               <div>
-                {!window.location.hostname.includes('d14l4o1um83q49') && (
-                  <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 8 }}>
-                    Debug: {issueHealth.length} data points loaded
-                  </div>
-                )}
-                <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={issueHealth} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" 
-                    tickFormatter={date => {
-                      try {
-                        const d = new Date(date + 'T12:00:00Z');
-                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                      } catch (e) {
-                        return date;
+                <div style={{ height: '250px', width: '100%' }}>
+                  <ReactApexChart
+                    options={{
+                      chart: {
+                        type: 'line',
+                        height: 250,
+                        toolbar: {
+                          show: false
+                        }
+                      },
+                      stroke: {
+                        curve: 'smooth',
+                        width: 4
+                      },
+                      colors: ['#10b981'],
+                      xaxis: {
+                        categories: issueHealthCategories,
+                        labels: {
+                          style: {
+                            colors: '#666'
+                          }
+                        },
+                        tickAmount: issueHealthCategories.length + 1
+                      },
+                      yaxis: {
+                        labels: {
+                          style: {
+                            colors: '#666'
+                          },
+                          formatter: function(value) {
+                            return value.toFixed(2);
+                          }
+                        }
+                      },
+                      grid: {
+                        borderColor: '#e1e1e1',
+                        strokeDashArray: 3
+                      },
+                      markers: {
+                        size: 6,
+                        colors: ['#10b981'],
+                        strokeColors: '#10b981',
+                        strokeWidth: 2
+                      },
+                      tooltip: {
+                        theme: 'light'
                       }
                     }}
-                    label={{
-                      value: 'Date',
-                      position: 'insideBottom',
-                      dy: 20,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
+                    series={[{
+                      name: 'Issue Health Ratio',
+                      data: issueHealthSeries
+                    }]}
+                    type="line"
+                    height={250}
+
                   />
-                  <YAxis 
-                    label={{
-                      value: 'Ratio',
-                      position: 'insideLeft',
-                      dy: -20,
-                      dx: -15,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
-                  />
-                  <Tooltip 
-                    labelFormatter={date => {
-                      try {
-                        const d = new Date(date + 'T12:00:00Z');
-                        return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-                      } catch (e) {
-                        return date;
-                      }
-                    }}
-                  />
-                  <Line type="monotone" dataKey="ratio" stroke="#10b981" strokeWidth={3} dot={{ r: 6, fill: "#10b981" }} />
-                </LineChart>
-              </ResponsiveContainer>
+                </div>
               </div>
             ) : (
               <p style={{ color: '#888', marginTop: 24 }}>No issue health data available.</p>
@@ -587,52 +726,69 @@ function App() {
 
             {packageDownloads.length > 0 ? (
               <div>
-                {!window.location.hostname.includes('d14l4o1um83q49') && (
-                  <div style={{ fontSize: '0.8rem', color: '#666', marginBottom: 8 }}>
-                    Debug: {packageDownloads.length} data points loaded
-                  </div>
-                )}
-                <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={packageDownloads} margin={{ top: 20, right: 30, left: 60, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="week_start" 
-                    tickFormatter={date => {
-                      try {
-                        const d = new Date(date + 'T12:00:00Z');
-                        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                      } catch (e) {
-                        return date;
+                <div style={{ height: '250px', width: '100%' }}>
+                  <ReactApexChart
+                    options={{
+                      chart: {
+                        type: 'line',
+                        height: 250,
+                        toolbar: {
+                          show: false
+                        }
+                      },
+                      stroke: {
+                        curve: 'smooth',
+                        width: 4
+                      },
+                      colors: ['#8b5cf6'],
+                      xaxis: {
+                        categories: packageDownloads.map(d => {
+                          const date = new Date(d.week_start);
+                          return date.toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          });
+                        }),
+                        labels: {
+                          style: {
+                            colors: '#666'
+                          }
+                        }
+                      },
+                      yaxis: {
+                        labels: {
+                          style: {
+                            colors: '#666'
+                          },
+                          formatter: function(value) {
+                            return Math.round(value).toLocaleString();
+                          }
+                        }
+                      },
+                      grid: {
+                        borderColor: '#e1e1e1',
+                        strokeDashArray: 3
+                      },
+                      markers: {
+                        size: 6,
+                        colors: ['#8b5cf6'],
+                        strokeColors: '#8b5cf6',
+                        strokeWidth: 2
+                      },
+                      tooltip: {
+                        theme: 'light'
                       }
                     }}
-                    label={{
-                      value: 'Week',
-                      position: 'insideBottom',
-                      dy: 20,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
+                    series={[{
+                      name: 'Package Downloads',
+                      data: packageDownloads.map(d => d.downloads)
+                    }]}
+                    type="line"
+                    height={250}
                   />
-                  <YAxis 
-                    label={{
-                      value: 'Downloads',
-                      position: 'insideLeft',
-                      dy: -20,
-                      dx: -15,
-                      style: { textAnchor: 'middle', fontSize: '1rem', fill: '#6366f1', fontWeight: 600 }
-                    }}
-                  />
-                  <Tooltip 
-                    labelFormatter={date => {
-                      try {
-                        const d = new Date(date + 'T12:00:00Z');
-                        return d.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' });
-                      } catch (e) {
-                        return date;
-                      }
-                    }}
-                  />
-                  <Line type="monotone" dataKey="downloads" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 6, fill: "#8b5cf6" }} />
-                </LineChart>
-              </ResponsiveContainer>
+                </div>
+
               </div>
             ) : (
               <p style={{ color: '#888', marginTop: 24 }}>No package download data available.</p>

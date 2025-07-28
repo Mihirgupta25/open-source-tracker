@@ -97,17 +97,17 @@ export class OpenSourceTrackerStack extends cdk.Stack {
       });
     }
 
-    // Dev Credentials Secret (only for dev environment)
+    // Staging Credentials Secret (only for staging environment)
     let devCredentialsSecret: secretsmanager.ISecret | undefined;
-    if (environment === 'dev' && devCredentialsSecretName) {
+    if (environment === 'staging' && devCredentialsSecretName) {
       if (useSharedDatabase && environment !== sharedDatabaseEnvironment) {
         // Reference existing secret from the shared environment
-        devCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(this, 'DevCredentialsSecret', devCredentialsSecretName);
+        devCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(this, 'StagingCredentialsSecret', devCredentialsSecretName);
       } else {
         // Create new secret for this environment
-        devCredentialsSecret = new secretsmanager.Secret(this, 'DevCredentialsSecret', {
+        devCredentialsSecret = new secretsmanager.Secret(this, 'StagingCredentialsSecret', {
           secretName: devCredentialsSecretName,
-          description: `Dev environment credentials for ${environment} environment`,
+          description: `Staging environment credentials for ${environment} environment`,
           generateSecretString: {
             secretStringTemplate: JSON.stringify({ username: 'dev', password: '' }),
             generateStringKey: 'password',
@@ -227,10 +227,10 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     githubTokenSecret.grantRead(packageDownloadsCollector);
 
     // EventBridge Rules for scheduled data collection
-    // Star growth: every 3 hours starting at 3 AM PST (11 AM UTC)
+    // Star growth: every 3 hours starting at 3:00 AM PDT (10:00 AM UTC)
     const frequentDataCollectionRule = new events.Rule(this, 'FrequentDataCollectionRule', {
-      schedule: events.Schedule.expression('cron(0 11/3 * * ? *)'), // 11 AM UTC = 3 AM PST, then every 3 hours
-      description: `Frequent data collection (every 3 hours starting 3 AM PST) for ${environment} environment`,
+      schedule: events.Schedule.expression('cron(0 10/3 * * ? *)'), // 10 AM UTC = 3 AM PDT, then every 3 hours
+      description: `Frequent data collection (every 3 hours starting 3:00 AM PDT) for ${environment} environment`,
     });
 
     // PR velocity and issue health: once daily at 11:50 PM PST (7:50 AM UTC next day)
@@ -296,9 +296,9 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     // Use S3Origin with proper configuration
     const s3Origin = new origins.S3Origin(frontendBucket);
 
-    // Lambda@Edge function for dev environment authentication
+    // Lambda@Edge function for staging environment authentication
     let authFunction: lambda.Function | undefined;
-    if (environment === 'dev') {
+    if (environment === 'staging') {
       authFunction = new lambda.Function(this, 'AuthFunction', {
         runtime: lambda.Runtime.NODEJS_18_X,
         handler: 'auth-function.handler',
@@ -314,7 +314,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
         origin: s3Origin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-        ...(environment === 'dev' && authFunction ? {
+        ...(environment === 'staging' && authFunction ? {
           edgeLambdas: [{
             functionVersion: authFunction.currentVersion,
             eventType: cloudfront.LambdaEdgeEventType.VIEWER_REQUEST,

@@ -1,11 +1,11 @@
 # Development Workflow
 
-This document outlines the development workflow for the Open Source Tracker project, ensuring changes are properly tested in the dev environment before being promoted to production.
+This document outlines the development workflow for the Open Source Tracker project, ensuring changes are properly tested in the staging environment before being promoted to production.
 
 ## 🎯 **Workflow Overview**
 
 ```
-Feature Branch → Develop Branch → Dev Environment → Testing → Main Branch → Production Environment
+Feature Branch → Develop Branch → Staging Environment → Testing → Main Branch → Production Environment
 ```
 
 ## 📋 **Development Process**
@@ -39,11 +39,11 @@ git commit -m "feat: your feature description"
 git push origin feature/your-feature-name
 ```
 
-### **3. Testing in Dev Environment**
+### **3. Testing in Staging Environment**
 
 #### **Option A: Automatic Deployment (Recommended)**
 1. Create a Pull Request from your feature branch to `develop`
-2. The CI/CD pipeline will automatically deploy to the dev environment
+2. The CI/CD pipeline will automatically deploy to the staging environment
 3. Test your changes at: **https://dcujo2wk56am6.cloudfront.net**
 
 #### **Option B: Manual Deployment**
@@ -53,7 +53,7 @@ git push origin feature/your-feature-name
 
 ### **4. Promoting to Production**
 
-Once you've tested your changes in the dev environment:
+Once you've tested your changes in the staging environment:
 
 #### **Option A: Pull Request (Recommended)**
 1. Create a Pull Request from `develop` to `main`
@@ -90,7 +90,7 @@ git push origin main
 ## 🗄️ **Database Strategy**
 
 ### **Shared Database Setup (Current)**
-Both dev and prod environments currently use the same database tables (dev tables) to ensure data consistency.
+Both staging and prod environments currently use the same database tables (staging tables) to ensure data consistency.
 
 ### **Database Management Commands:**
 ```bash
@@ -115,7 +115,7 @@ npm run db:separate
 ## 🔧 **Branch Strategy**
 
 - **`main`**: Production-ready code, deploys to production environment
-- **`develop`**: Integration branch, deploys to dev environment
+- **`develop`**: Integration branch, deploys to staging environment
 - **`feature/*`**: Feature branches for individual changes
 
 ## 📝 **Commit Message Convention**
@@ -135,9 +135,9 @@ chore: maintenance tasks
 ## 🚀 **Deployment Triggers**
 
 ### **Automatic Deployments**
-- **Push to `develop`** → Deploys to dev environment
+- **Push to `develop`** → Deploys to staging environment
 - **Push to `main`** → Deploys to production environment
-- **Pull Request to `develop`** → Deploys to dev environment for testing
+- **Pull Request to `develop`** → Deploys to staging environment for testing
 
 ### **Manual Deployments**
 - **GitHub Actions** → Manual workflow trigger with environment selection
@@ -146,7 +146,7 @@ chore: maintenance tasks
 
 Before promoting to production, ensure:
 
-- [ ] Code changes work in dev environment
+- [ ] Code changes work in staging environment
 - [ ] All API endpoints return expected data
 - [ ] Frontend displays data correctly
 - [ ] No console errors in browser
@@ -155,21 +155,21 @@ Before promoting to production, ensure:
 
 ## 🔍 **Troubleshooting**
 
-### **Dev Environment Issues**
+### **Staging Environment Issues**
 1. Check GitHub Actions for deployment status
 2. Verify AWS credentials are configured
 3. Check CloudFormation stack status
 4. Review Lambda function logs
 
 ### **Production Deployment Issues**
-1. Ensure dev environment is working
+1. Ensure staging environment is working
 2. Check for any breaking changes
 3. Verify all tests pass
 4. Review deployment logs
 
-## 🔐 **Dev Environment Authentication**
+## 🔐 **Staging Environment Authentication**
 
-The dev environment is password protected to prevent unauthorized access. Credentials are stored securely in AWS Secrets Manager.
+The staging environment is password protected to prevent unauthorized access. Credentials are stored securely in AWS Secrets Manager.
 
 ### **Default Credentials:**
 - **Username:** `dev`
@@ -178,13 +178,13 @@ The dev environment is password protected to prevent unauthorized access. Creden
 ### **Managing Authentication:**
 ```bash
 # Show current credentials
-npm run dev:auth:show
+npm run staging:auth:show
 
 # Update to default credentials
-npm run dev:auth:update
+npm run staging:auth:update
 
 # Update to custom credentials
-npm run dev:auth:custom <username> <password>
+npm run staging:auth:custom <username> <password>
 ```
 
 ### **Security Features:**
@@ -224,7 +224,7 @@ git push origin main
 
 ## 🎯 **Best Practices**
 
-1. **Always test in dev first** - Never deploy directly to production
+1. **Always test in staging first** - Never deploy directly to production
 2. **Use feature branches** - Keep changes isolated and reviewable
 3. **Write clear commit messages** - Make history readable
 4. **Test thoroughly** - Ensure everything works before promotion
