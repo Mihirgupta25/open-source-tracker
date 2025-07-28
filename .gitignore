@@ -12,6 +12,7 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
 
 # OS generated files
 .DS_Store
@@ -37,6 +38,9 @@ infrastructure/cdk.out/
 *.pem
 *.key
 
+# Credentials and sensitive files
+scripts/setup-dev-credentials.js
+
 # IDE files
 .vscode/
 .idea/
@@ -45,4 +49,25 @@ infrastructure/cdk.out/
 
 # Temporary files
 *.tmp
-*.temp 
+*.temp
+
+# Lambda deployment packages
+*.zip
+
+# Response files (test outputs)
+*-response.json
+response.json
+prod-response.json
+dev-response.json
+
+# Process output files
+nohup.out
+
+# TypeScript config (if not needed in repo)
+tsconfig.json
+
+# Temporary test and debug files
+test-*.html
+debug-*.html
+test-*.js
+debug-*.js 

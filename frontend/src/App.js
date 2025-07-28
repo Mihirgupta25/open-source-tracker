@@ -6,7 +6,7 @@ import ReactApexChart from 'react-apexcharts';
 const getApiBaseUrl = () => {
   // Check if we're on staging environment
   if (window.location.hostname.includes('d1j9ixntt6x51n')) {
-    return 'https://fwaonagbbh.execute-api.us-east-1.amazonaws.com/staging';
+    return 'https://k3wr4zoexk.execute-api.us-east-1.amazonaws.com/prod';
   }
   // Default to production
   return process.env.REACT_APP_API_URL || 'https://fwaonagbbh.execute-api.us-east-1.amazonaws.com/prod';
