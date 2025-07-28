@@ -1,0 +1,164 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+        - staging
+        - prod
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm install
+        cd backend && npm install && cd ..
+        cd frontend && npm install && cd ..
+    
+    - name: Run tests
+      run: |
+        cd frontend && npm test -- --watchAll=false && cd ..
+    
+    - name: Build frontend
+      run: |
+        cd frontend && npm run build && cd ..
+
+  deploy-staging:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm install
+        cd infrastructure && npm install && cd ..
+        cd backend && npm install && cd ..
+        cd frontend && npm install && cd ..
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Build frontend
+      run: |
+        cd frontend && npm run build && cd ..
+    
+    - name: Deploy to AWS (Staging)
+      run: |
+        cd infrastructure
+        npm run build
+        cdk deploy --context environment=staging --require-approval never
+        cd ..
+    
+    - name: Upload frontend to S3
+      run: |
+        BUCKET_NAME=$(aws cloudformation describe-stacks \
+          --stack-name "OpenSourceTrackerStagingV" \
+          --query 'Stacks[0].Outputs[?OutputKey==`FrontendBucketName`].OutputValue' \
+          --output text)
+        aws s3 sync frontend/build/ s3://$BUCKET_NAME/ --delete
+    
+    - name: Get deployment info
+      run: |
+        echo "Staging Environment Deployed Successfully!"
+        echo "API Endpoint: $(aws cloudformation describe-stacks \
+          --stack-name "OpenSourceTrackerStagingV" \
+          --query 'Stacks[0].Outputs[?OutputKey==`APIEndpoint`].OutputValue' \
+          --output text)"
+        echo "Frontend URL: https://$(aws cloudformation describe-stacks \
+          --stack-name "OpenSourceTrackerStagingV" \
+          --query 'Stacks[0].Outputs[?OutputKey==`FrontendURL`].OutputValue' \
+          --output text)"
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        npm install
+        cd infrastructure && npm install && cd ..
+        cd backend && npm install && cd ..
+        cd frontend && npm install && cd ..
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Build frontend
+      run: |
+        cd frontend && npm run build && cd ..
+    
+    - name: Deploy to AWS (Prod)
+      run: |
+        cd infrastructure
+        npm run build
+        cdk deploy --context environment=prod --require-approval never
+        cd ..
+    
+    - name: Upload frontend to S3
+      run: |
+        BUCKET_NAME=$(aws cloudformation describe-stacks \
+          --stack-name "OpenSourceTrackerProdV2" \
+          --query 'Stacks[0].Outputs[?OutputKey==`FrontendBucketName`].OutputValue' \
+          --output text)
+        aws s3 sync frontend/build/ s3://$BUCKET_NAME/ --delete
+    
+    - name: Get deployment info
+      run: |
+        echo "Production Environment Deployed Successfully!"
+        echo "API Endpoint: $(aws cloudformation describe-stacks \
+          --stack-name "OpenSourceTrackerProdV2" \
+          --query 'Stacks[0].Outputs[?OutputKey==`APIEndpoint`].OutputValue' \
+          --output text)"
+        echo "Frontend URL: https://$(aws cloudformation describe-stacks \
+          --stack-name "OpenSourceTrackerProdV2" \
+          --query 'Stacks[0].Outputs[?OutputKey==`FrontendURL`].OutputValue' \
+          --output text)" 
