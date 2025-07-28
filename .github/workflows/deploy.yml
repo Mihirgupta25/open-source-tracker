@@ -2,18 +2,18 @@ name: Deploy to AWS
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       environment:
         description: 'Environment to deploy to'
         required: true
-        default: 'dev'
+        default: 'prod'
         type: choice
         options:
-        - dev
+        - staging
         - prod
 
 env:
@@ -49,7 +49,7 @@ jobs:
   deploy-staging:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
     
     steps:
     - uses: actions/checkout@v4
@@ -88,7 +88,7 @@ jobs:
     - name: Upload frontend to S3
       run: |
         BUCKET_NAME=$(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerStaging" \
+          --stack-name "OpenSourceTrackerStagingV" \
           --query 'Stacks[0].Outputs[?OutputKey==`FrontendBucketName`].OutputValue' \
           --output text)
         aws s3 sync frontend/build/ s3://$BUCKET_NAME/ --delete
@@ -97,39 +97,18 @@ jobs:
       run: |
         echo "Staging Environment Deployed Successfully!"
         echo "API Endpoint: $(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerStaging" \
+          --stack-name "OpenSourceTrackerStagingV" \
           --query 'Stacks[0].Outputs[?OutputKey==`APIEndpoint`].OutputValue' \
           --output text)"
         echo "Frontend URL: https://$(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerStaging" \
+          --stack-name "OpenSourceTrackerStagingV" \
           --query 'Stacks[0].Outputs[?OutputKey==`FrontendURL`].OutputValue' \
           --output text)"
-    
-    - name: Comment on PR
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const apiUrl = '${{ steps.deploy.outputs.api-url }}';
-          const frontendUrl = '${{ steps.deploy.outputs.frontend-url }}';
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: `🚀 **Staging Deployment Complete!**
-            
-            **Frontend:** https://dcujo2wk56am6.cloudfront.net
-            **API:** https://l97n7ozrb0.execute-api.us-east-1.amazonaws.com/prod
-            
-            Test your changes and approve this PR to deploy to production.`
-          })
 
   deploy-prod:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
-    environment: production
     
     steps:
     - uses: actions/checkout@v4
@@ -168,7 +147,7 @@ jobs:
     - name: Upload frontend to S3
       run: |
         BUCKET_NAME=$(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerProd" \
+          --stack-name "OpenSourceTrackerProdV2" \
           --query 'Stacks[0].Outputs[?OutputKey==`FrontendBucketName`].OutputValue' \
           --output text)
         aws s3 sync frontend/build/ s3://$BUCKET_NAME/ --delete
@@ -177,10 +156,10 @@ jobs:
       run: |
         echo "Production Environment Deployed Successfully!"
         echo "API Endpoint: $(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerProd" \
+          --stack-name "OpenSourceTrackerProdV2" \
           --query 'Stacks[0].Outputs[?OutputKey==`APIEndpoint`].OutputValue' \
           --output text)"
         echo "Frontend URL: https://$(aws cloudformation describe-stacks \
-          --stack-name "OpenSourceTrackerProd" \
+          --stack-name "OpenSourceTrackerProdV2" \
           --query 'Stacks[0].Outputs[?OutputKey==`FrontendURL`].OutputValue' \
           --output text)" 
