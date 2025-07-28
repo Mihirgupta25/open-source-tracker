@@ -188,6 +188,33 @@ We welcome contributions! Here's how to get started:
 
 ---
 
+## 🚧 Planned Features
+
+### 📊 Enhanced Data Visualization
+- **Time Period Toggles**: View data in weekly, monthly, and quarterly trends for all graphs
+  - Star Growth: Toggle between daily, weekly, monthly, quarterly views
+  - PR Velocity: Aggregate data by different time periods
+  - Issue Health: Trend analysis across different timeframes
+  - Package Downloads: Enhanced weekly/monthly breakdowns
+
+### 🧪 Staging Environment Testing Tools
+- **Database Management Buttons**: 
+  - Clear database and copy production data for fresh testing
+  - Manual data point creation for testing purposes
+  - Reset staging environment to production state
+- **Testing Interface**: 
+  - Add test data points directly from the UI
+  - Simulate different data scenarios
+  - Validate chart rendering with custom data
+
+### 🔧 Development Enhancements
+- **Real-time Data Updates**: Live data refresh without page reload
+- **Export Functionality**: Download charts as images or data as CSV
+- **Advanced Filtering**: Filter data by date ranges and custom criteria
+- **Mobile Optimization**: Enhanced responsive design for mobile devices
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
