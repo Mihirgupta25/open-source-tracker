@@ -32,7 +32,7 @@ function App() {
   const [issueHealthSeries, setIssueHealthSeries] = useState([]);
 
   function parseRepo(input) {
-    const match = input.match(/github\.com\/(.+?\/[^\/?#]+)/);
+    const match = input.match(/github\.com\/(.+?\/[^/#?]+)/);
     if (match) return match[1];
     return input.trim();
   }
