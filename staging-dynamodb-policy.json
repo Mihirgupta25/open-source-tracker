@@ -1,0 +1,28 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:PutItem",
+        "dynamodb:GetItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:BatchGetItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:us-east-1:071493677444:table/staging-pr-velocity",
+        "arn:aws:dynamodb:us-east-1:071493677444:table/staging-star-growth",
+        "arn:aws:dynamodb:us-east-1:071493677444:table/staging-issue-health",
+        "arn:aws:dynamodb:us-east-1:071493677444:table/staging-package-downloads",
+        "arn:aws:dynamodb:us-east-1:071493677444:table/prod-star-growth",
+        "arn:aws:dynamodb:us-east-1:071493677444:table/prod-pr-velocity",
+        "arn:aws:dynamodb:us-east-1:071493677444:table/prod-issue-health",
+        "arn:aws:dynamodb:us-east-1:071493677444:table/prod-package-downloads"
+      ]
+    }
+  ]
+} 

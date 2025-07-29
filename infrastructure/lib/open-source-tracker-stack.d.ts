@@ -4,6 +4,7 @@ export interface OpenSourceTrackerStackProps extends cdk.StackProps {
     environment: string;
     domainName?: string;
     githubTokenSecretName: string;
+    devCredentialsSecretName?: string;
     dataCollectionSchedule: string;
     useSharedDatabase?: boolean;
     sharedDatabaseEnvironment?: string;

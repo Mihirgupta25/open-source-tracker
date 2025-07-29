@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import ReactApexChart from 'react-apexcharts';
+import RepoManager from './RepoManager';
 
 // API base URL - detect environment and use appropriate endpoint
 const getApiBaseUrl = () => {
@@ -21,6 +22,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('promptfoo');
+  const [repoTabs, setRepoTabs] = useState({ 'promptfoo/promptfoo': 'promptfoo' });
   const [prVelocity, setPrVelocity] = useState([]);
   const [issueHealth, setIssueHealth] = useState([]);
   const [packageDownloads, setPackageDownloads] = useState([]);
@@ -30,6 +32,18 @@ function App() {
   const [prVelocitySeries, setPrVelocitySeries] = useState([]);
   const [issueHealthCategories, setIssueHealthCategories] = useState([]);
   const [issueHealthSeries, setIssueHealthSeries] = useState([]);
+  
+  // State for manual data collection
+  const [isCollectingData, setIsCollectingData] = useState(false);
+  // State for reset staging data
+  const [isResettingData, setIsResettingData] = useState(false);
+  // Force chart re-render when data is reset
+  const [chartKey, setChartKey] = useState(0);
+
+  // Multi-repository support (staging only)
+  const [repos, setRepos] = useState(['promptfoo/promptfoo']);
+  const [activeRepo, setActiveRepo] = useState('promptfoo/promptfoo');
+  const isStaging = window.location.hostname.includes('d1j9ixntt6x51n');
 
   function parseRepo(input) {
     const match = input.match(/github\.com\/(.+?\/[^/#?]+)/);
@@ -55,11 +69,30 @@ function App() {
     }
   };
 
-  // Fetch star history for promptfoo/promptfoo on mount
+  // Function to handle repository changes
+  const handleRepoChange = (newRepo) => {
+    setActiveRepo(newRepo);
+    // Initialize tab for new repository if it doesn't exist
+    if (!repoTabs[newRepo]) {
+      const repoName = newRepo.split('/')[1] || newRepo;
+      setRepoTabs(prev => ({ ...prev, [newRepo]: repoName }));
+      setActiveTab(repoName);
+    } else {
+      setActiveTab(repoTabs[newRepo]);
+    }
+    // Clear current data when switching repos
+    setStarHistory([]);
+    setPrVelocity([]);
+    setIssueHealth([]);
+    setPackageDownloads([]);
+    setChartKey(prev => prev + 1);
+  };
+
+  // Fetch star history for the active repository
   useEffect(() => {
     async function fetchHistory() {
       try {
-          const res = await fetch(`${API_BASE_URL}/api/star-history`);
+          const res = await fetch(`${API_BASE_URL}/api/star-history?repo=${activeRepo}`);
   const data = await res.json();
         if (Array.isArray(data)) {
           const processedData = data.map(d => ({
@@ -102,10 +135,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'promptfoo') {
+            if (activeTab === repoTabs[activeRepo]) {
       async function fetchPrVelocity() {
         try {
-          const res = await fetch(`${API_BASE_URL}/api/pr-velocity`);
+          const res = await fetch(`${API_BASE_URL}/api/pr-velocity?repo=${activeRepo}`);
           const data = await res.json();
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
 
@@ -145,7 +178,7 @@ function App() {
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
   
           }
-          const res = await fetch(`${API_BASE_URL}/api/issue-health`);
+          const res = await fetch(`${API_BASE_URL}/api/issue-health?repo=${activeRepo}`);
           const data = await res.json();
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
 
@@ -185,7 +218,7 @@ function App() {
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
     
           }
-          const res = await fetch(`${API_BASE_URL}/api/package-downloads`);
+          const res = await fetch(`${API_BASE_URL}/api/package-downloads?repo=${activeRepo}`);
           const data = await res.json();
           if (!window.location.hostname.includes('d14l4o1um83q49')) {
 
@@ -261,7 +294,243 @@ function App() {
       fetchIssueHealth();
       fetchPackageDownloads();
     }
-  }, [activeTab]);
+  }, [activeTab, activeRepo]);
+
+  // Function to trigger immediate star data collection (staging only)
+  const triggerStarCollection = async () => {
+    if (!window.location.hostname.includes('d1j9ixntt6x51n')) {
+      return; // Only allow on staging environment
+    }
+    
+    setIsCollectingData(true);
+    try {
+      // Call the trigger Lambda function directly
+      const response = await fetch('https://t06z2gxah5.execute-api.us-east-1.amazonaws.com/prod/trigger-star-collection', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ repo: activeRepo })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Refresh the star history data
+        const historyResponse = await fetch(`${API_BASE_URL}/api/star-history?repo=${activeRepo}`);
+        const historyData = await historyResponse.json();
+        
+        if (Array.isArray(historyData)) {
+          const processedData = historyData.map(d => ({
+            ...d,
+            timestamp: d.timestamp,
+            displayTimestamp: (() => {
+              let dateObj;
+              if (d.timestamp.includes('T') && d.timestamp.includes('Z')) {
+                dateObj = new Date(d.timestamp);
+              } else if (d.timestamp.includes(',') && d.timestamp.includes(' ')) {
+                dateObj = new Date(d.timestamp);
+              } else {
+                dateObj = new Date(d.timestamp.replace(' ', 'T'));
+              }
+              return dateObj.toLocaleString(undefined, {
+                year: 'numeric', month: 'long', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', hour12: true
+              });
+            })()
+          }));
+          
+          setStarHistory(processedData);
+        }
+        
+        alert('✅ New star data point created successfully!');
+      } else {
+        throw new Error(data.error || 'Failed to trigger star data collection');
+      }
+    } catch (error) {
+      console.error('Error triggering star data collection:', error);
+      alert('❌ Failed to create new star data point: ' + error.message);
+    } finally {
+      setIsCollectingData(false);
+    }
+  };
+
+  // Function to trigger immediate PR velocity data collection (staging only)
+  const triggerPRVelocityCollection = async () => {
+    if (!window.location.hostname.includes('d1j9ixntt6x51n')) {
+      return; // Only allow on staging environment
+    }
+    
+    setIsCollectingData(true);
+    try {
+      // Call the trigger PR velocity endpoint
+      const response = await fetch(`${API_BASE_URL}/api/trigger-pr-velocity`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ repo: activeRepo })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Refresh the PR velocity data
+        const prVelocityResponse = await fetch(`${API_BASE_URL}/api/pr-velocity?repo=${activeRepo}`);
+        const prVelocityData = await prVelocityResponse.json();
+        
+        if (Array.isArray(prVelocityData)) {
+          const processedData = prVelocityData.map(d => ({
+            ...d,
+            date: d.date,
+            displayDate: (() => {
+              const dateObj = new Date(d.date);
+              return dateObj.toLocaleDateString(undefined, {
+                year: 'numeric', month: 'long', day: 'numeric'
+              });
+            })()
+          }));
+          
+          setPrVelocity(processedData);
+        }
+        
+        alert('✅ New PR velocity data point created successfully!');
+      } else {
+        throw new Error(data.error || 'Failed to trigger PR velocity data collection');
+      }
+    } catch (error) {
+      console.error('Error triggering PR velocity data collection:', error);
+      alert('❌ Failed to create new PR velocity data point: ' + error.message);
+    } finally {
+      setIsCollectingData(false);
+    }
+  };
+
+  // Function to reset staging data with production data (staging only)
+  const resetStagingData = async () => {
+    if (!window.location.hostname.includes('d1j9ixntt6x51n')) {
+      return; // Only allow on staging environment
+    }
+    
+    setIsResettingData(true);
+    try {
+      const response = await fetch('https://j4o79e11f9.execute-api.us-east-1.amazonaws.com/prod/reset-staging-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Clear all current data immediately and force chart re-render
+        setStarHistory([]);
+        setPrVelocity([]);
+        setIssueHealth([]);
+        setPackageDownloads([]);
+        setChartKey(prev => prev + 1);
+        
+        // Wait a moment for the backend to complete the reset
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Refresh all data sources
+        try {
+          // Refresh star history data
+          const historyResponse = await fetch(`${API_BASE_URL}/api/star-history`);
+          const historyData = await historyResponse.json();
+          
+          if (Array.isArray(historyData)) {
+            const processedData = historyData.map(d => ({
+              ...d,
+              timestamp: d.timestamp,
+              displayTimestamp: (() => {
+                let dateObj;
+                if (d.timestamp.includes('T') && d.timestamp.includes('Z')) {
+                  dateObj = new Date(d.timestamp);
+                } else if (d.timestamp.includes(',') && d.timestamp.includes(' ')) {
+                  dateObj = new Date(d.timestamp);
+                } else {
+                  dateObj = new Date(d.timestamp.replace(' ', 'T'));
+                }
+                return dateObj.toLocaleString(undefined, {
+                  year: 'numeric', month: 'long', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit', hour12: true
+                });
+              })()
+            }));
+            setStarHistory(processedData);
+          }
+
+          // Refresh PR velocity data
+          const prResponse = await fetch(`${API_BASE_URL}/api/pr-velocity`);
+          const prData = await prResponse.json();
+          if (Array.isArray(prData)) {
+            const byDate = {};
+            prData.forEach(d => {
+              byDate[d.date] = d;
+            });
+            const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+            const chartData = [...sorted.map(d => ({
+              ...d,
+              date: d.date,
+              ratio: d.ratio !== undefined ? Number(d.ratio) : 0
+            }))];
+            setPrVelocity(chartData);
+          }
+
+          // Refresh issue health data
+          const issueResponse = await fetch(`${API_BASE_URL}/api/issue-health`);
+          const issueData = await issueResponse.json();
+          if (Array.isArray(issueData)) {
+            const byDate = {};
+            issueData.forEach(d => {
+              byDate[d.date] = d;
+            });
+            const sorted = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date));
+            const chartData = [...sorted.map(d => ({
+              ...d,
+              date: d.date,
+              ratio: d.ratio !== undefined ? Number(d.ratio) : 0
+            }))];
+            setIssueHealth(chartData);
+          }
+
+          // Refresh package downloads data
+          const packageResponse = await fetch(`${API_BASE_URL}/api/package-downloads`);
+          const packageData = await packageResponse.json();
+          if (Array.isArray(packageData)) {
+            const filteredData = packageData.filter(d => {
+              const irregularDates = ['2025-07-20', '2025-07-22'];
+              return !irregularDates.includes(d.week_start);
+            });
+            const byWeek = {};
+            filteredData.forEach(d => {
+              byWeek[d.week_start] = d;
+            });
+            const sorted = Object.values(byWeek).sort((a, b) => a.week_start.localeCompare(b.week_start));
+            const chartData = [...sorted.map(d => ({
+              ...d,
+              week_start: d.week_start,
+              downloads: d.downloads !== undefined ? Number(d.downloads) : 0
+            }))];
+            setPackageDownloads(chartData);
+          }
+        } catch (error) {
+          console.error('Error refreshing data after reset:', error);
+        }
+        
+        alert(`✅ Staging data reset successfully! Copied ${data.itemsCopied} items from production.`);
+      } else {
+        throw new Error(data.error || 'Failed to reset staging data');
+      }
+    } catch (error) {
+      console.error('Error resetting staging data:', error);
+      alert('❌ Failed to reset staging data: ' + error.message);
+    } finally {
+      setIsResettingData(false);
+    }
+  };
 
   // Update helper arrays when data changes
   useEffect(() => {
@@ -417,13 +686,23 @@ function App() {
         </div>
       )}
 
+      {/* Repository Manager (staging only) */}
+      <RepoManager
+        activeRepo={activeRepo}
+        setActiveRepo={setActiveRepo}
+        repos={repos}
+        setRepos={setRepos}
+        onRepoChange={handleRepoChange}
+        isStaging={isStaging}
+      />
+
       <div className="tabs">
         <button
-          className={activeTab === 'promptfoo' ? 'tab-active' : 'tab'}
-          onClick={() => setActiveTab('promptfoo')}
+          className={activeTab === repoTabs[activeRepo] ? 'tab-active' : 'tab'}
+          onClick={() => setActiveTab(repoTabs[activeRepo])}
           style={{ marginRight: 12 }}
         >
-          Promptfoo
+          {isStaging ? repoTabs[activeRepo] : 'Promptfoo'}
         </button>
         <button
           className={activeTab === 'realtime' ? 'tab-active' : 'tab'}
@@ -432,7 +711,7 @@ function App() {
           Real Time Statistics
         </button>
       </div>
-      {activeTab === 'promptfoo' && (
+      {activeTab === repoTabs[activeRepo] && (
         <>
           {starHistory.length > 0 ? (
             <div className="card">
@@ -443,9 +722,95 @@ function App() {
               <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
                 Data is collected from the GitHub API every 3 hours.
               </p>
+              
+              {/* Manual data collection and reset buttons (staging only) */}
+              {window.location.hostname.includes('d1j9ixntt6x51n') && (
+                <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+                  <button
+                    onClick={triggerStarCollection}
+                    disabled={isCollectingData}
+                    style={{
+                      backgroundColor: isCollectingData ? '#ccc' : '#10b981',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      cursor: isCollectingData ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isCollectingData) {
+                        e.target.style.backgroundColor = '#059669';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isCollectingData) {
+                        e.target.style.backgroundColor = '#10b981';
+                      }
+                    }}
+                  >
+                    {isCollectingData ? (
+                      <>
+                        <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                        Creating Data Point...
+                      </>
+                    ) : (
+                      <>
+                        ⚡ Create New Data Point
+                      </>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={resetStagingData}
+                    disabled={isResettingData}
+                    style={{
+                      backgroundColor: isResettingData ? '#ccc' : '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      cursor: isResettingData ? 'not-allowed' : 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isResettingData) {
+                        e.target.style.backgroundColor = '#dc2626';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isResettingData) {
+                        e.target.style.backgroundColor = '#ef4444';
+                      }
+                    }}
+                  >
+                    {isResettingData ? (
+                      <>
+                        <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                        Resetting Data...
+                      </>
+                    ) : (
+                      <>
+                        🔄 Reset to Production Data
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
 
                 <div style={{ height: '250px', width: '100%' }}>
                   <ReactApexChart
+                    key={`star-chart-${chartKey}`}
                     options={{
                       chart: {
                         type: 'line',
@@ -527,10 +892,96 @@ function App() {
               Data is collected from the GitHub API and updates daily at 11:50 PM PST.
             </p>
 
+            {/* Manual data collection and reset buttons for PR Velocity (staging only) */}
+            {window.location.hostname.includes('d1j9ixntt6x51n') && (
+              <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={triggerPRVelocityCollection}
+                  disabled={isCollectingData}
+                  style={{
+                    backgroundColor: isCollectingData ? '#ccc' : '#f59e42',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: isCollectingData ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isCollectingData) {
+                      e.target.style.backgroundColor = '#d97706';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isCollectingData) {
+                      e.target.style.backgroundColor = '#f59e42';
+                    }
+                  }}
+                >
+                  {isCollectingData ? (
+                    <>
+                      <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                      Creating Data Point...
+                    </>
+                  ) : (
+                    <>
+                      ⚡ Create New Data Point
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={resetStagingData}
+                  disabled={isResettingData}
+                  style={{
+                    backgroundColor: isResettingData ? '#ccc' : '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: isResettingData ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isResettingData) {
+                      e.target.style.backgroundColor = '#dc2626';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isResettingData) {
+                      e.target.style.backgroundColor = '#ef4444';
+                    }
+                  }}
+                >
+                  {isResettingData ? (
+                    <>
+                      <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                      Resetting Data...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Reset to Production Data
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
             {prVelocity.length > 0 ? (
               <div>
                 <div style={{ height: '250px', width: '100%' }}>
                   <ReactApexChart
+                    key={`pr-chart-${chartKey}`}
                     options={{
                       chart: {
                         type: 'line',
@@ -605,6 +1056,7 @@ function App() {
               <div>
                 <div style={{ height: '250px', width: '100%' }}>
                   <ReactApexChart
+                    key={`issue-chart-${chartKey}`}
                     options={{
                       chart: {
                         type: 'line',
@@ -679,6 +1131,7 @@ function App() {
               <div>
                 <div style={{ height: '250px', width: '100%' }}>
                   <ReactApexChart
+                    key={`package-chart-${chartKey}`}
                     options={{
                       chart: {
                         type: 'line',
