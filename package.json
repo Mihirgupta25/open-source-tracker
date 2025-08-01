@@ -1,64 +1,6 @@
 {
-  "name": "open-source-tracker",
-  "version": "1.0.0",
-  "description": "Open Source Growth Tracker with AWS deployment",
-  "scripts": {
-    "start": "concurrently \"cd backend && node index.js\" \"cd frontend && npm start\"",
-    "build": "cd frontend && npm run build",
-    "test": "cd frontend && npm test -- --watchAll=false --passWithNoTests",
-    "cdk": "cdk",
-    "cdk:staging": "node scripts/update-dev-auth.js && cdk deploy --profile default --context environment=staging",
-    "cdk:prod": "cdk deploy --profile default --context environment=prod",
-    "cdk:destroy:staging": "cdk destroy --profile default --context environment=staging",
-    "cdk:destroy:prod": "cdk destroy --profile default --context environment=prod",
-    "cdk:diff:staging": "cdk diff --profile default --context environment=staging",
-    "cdk:diff:prod": "cdk diff --profile default --context environment=prod",
-    "staging:setup": "git checkout develop && git pull origin develop",
-    "staging:feature": "git checkout -b feature/$(date +%Y%m%d-%H%M%S)",
-    "staging:test": "echo 'Testing in staging environment: https://dcujo2wk56am6.cloudfront.net'",
-    "staging:promote": "git checkout main && git merge develop && git push origin main",
-    "staging:status": "echo 'Current branch:' && git branch --show-current && echo 'Staging URL: https://dcujo2wk56am6.cloudfront.net'",
-    "staging:auth:setup": "node scripts/setup-dev-credentials.js",
-    "staging:auth:update": "node scripts/update-dev-auth.js",
-    "db:status": "node scripts/manage-databases.js status",
-    "db:separate": "node scripts/manage-databases.js separate",
-    "db:sync": "node scripts/manage-databases.js sync",
-    "db:copy": "node scripts/manage-databases.js copy",
-    "automation:status": "node scripts/check-automation.js status",
-    "automation:setup-token": "node scripts/check-automation.js setup-token",
-    "automation:test": "node scripts/check-automation.js test"
-  },
-  "keywords": [
-    "github",
-    "analytics",
-    "aws",
-    "serverless"
-  ],
-  "author": "",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^20.10.5",
-    "aws-cdk": "^2.124.0",
-    "aws-cdk-lib": "^2.124.0",
-    "concurrently": "^9.2.0",
-    "constructs": "^10.3.0",
-    "typescript": "^5.3.3"
-  },
   "dependencies": {
     "archiver": "^7.0.1",
-    "aws-sdk": "^2.1692.0",
-    "axios": "^1.11.0",
-    "better-sqlite3": "^12.2.0",
-    "chart.js": "^4.5.0",
-    "follow-redirects": "^1.15.9",
-    "form-data": "^4.0.4",
-    "jmespath": "^0.16.0",
-    "proxy-from-env": "^1.1.0",
-    "qs": "^6.14.0",
-    "querystring": "^0.2.1",
-    "react-chartjs-2": "^5.3.0",
-    "tunnel": "^0.0.6",
-    "url": "^0.11.4",
-    "url-parse": "^1.5.10"
+    "aws-sdk": "^2.1692.0"
   }
 }

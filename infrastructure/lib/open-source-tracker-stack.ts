@@ -45,38 +45,11 @@ export class OpenSourceTrackerStack extends cdk.Stack {
       issueHealthTable = dynamodb.Table.fromTableName(this, 'IssueHealthTable', `${tableSuffix}-issue-health`);
       packageDownloadsTable = dynamodb.Table.fromTableName(this, 'PackageDownloadsTable', `${tableSuffix}-package-downloads`);
     } else {
-      // Create new tables for this environment
-      starGrowthTable = new dynamodb.Table(this, 'StarGrowthTable', {
-        tableName: `${tableSuffix}-star-growth`,
-        partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
-        sortKey: { name: 'timestamp', type: dynamodb.AttributeType.STRING },
-        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      });
-
-      prVelocityTable = new dynamodb.Table(this, 'PRVelocityTable', {
-        tableName: `${tableSuffix}-pr-velocity`,
-        partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
-        sortKey: { name: 'date', type: dynamodb.AttributeType.STRING },
-        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      });
-
-      issueHealthTable = new dynamodb.Table(this, 'IssueHealthTable', {
-        tableName: `${tableSuffix}-issue-health`,
-        partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
-        sortKey: { name: 'date', type: dynamodb.AttributeType.STRING },
-        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      });
-
-      packageDownloadsTable = new dynamodb.Table(this, 'PackageDownloadsTable', {
-        tableName: `${tableSuffix}-package-downloads`,
-        partitionKey: { name: 'repo', type: dynamodb.AttributeType.STRING },
-        sortKey: { name: 'week_start', type: dynamodb.AttributeType.STRING },
-        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        removalPolicy: environment === 'prod' ? cdk.RemovalPolicy.RETAIN : cdk.RemovalPolicy.DESTROY,
-      });
+      // Reference existing tables for this environment
+      starGrowthTable = dynamodb.Table.fromTableName(this, 'StarGrowthTable', `${tableSuffix}-star-growth`);
+      prVelocityTable = dynamodb.Table.fromTableName(this, 'PRVelocityTable', `${tableSuffix}-pr-velocity`);
+      issueHealthTable = dynamodb.Table.fromTableName(this, 'IssueHealthTable', `${tableSuffix}-issue-health`);
+      packageDownloadsTable = dynamodb.Table.fromTableName(this, 'PackageDownloadsTable', `${tableSuffix}-package-downloads`);
     }
 
     // GitHub Token Secret
@@ -85,16 +58,8 @@ export class OpenSourceTrackerStack extends cdk.Stack {
       // Reference existing secret from the shared environment
       githubTokenSecret = secretsmanager.Secret.fromSecretNameV2(this, 'GitHubTokenSecret', githubTokenSecretName);
     } else {
-      // Create new secret for this environment
-      githubTokenSecret = new secretsmanager.Secret(this, 'GitHubTokenSecret', {
-        secretName: githubTokenSecretName,
-        description: `GitHub API token for ${environment} environment`,
-        generateSecretString: {
-          secretStringTemplate: JSON.stringify({ token: '' }),
-          generateStringKey: 'token',
-          excludeCharacters: '"@/\\',
-        },
-      });
+      // Reference existing secret for this environment
+      githubTokenSecret = secretsmanager.Secret.fromSecretNameV2(this, 'GitHubTokenSecret', githubTokenSecretName);
     }
 
     // Staging Credentials Secret (only for staging environment)
@@ -104,16 +69,8 @@ export class OpenSourceTrackerStack extends cdk.Stack {
         // Reference existing secret from the shared environment
         devCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(this, 'StagingCredentialsSecret', devCredentialsSecretName);
       } else {
-        // Create new secret for this environment
-        devCredentialsSecret = new secretsmanager.Secret(this, 'StagingCredentialsSecret', {
-          secretName: devCredentialsSecretName,
-          description: `Staging environment credentials for ${environment} environment`,
-          generateSecretString: {
-            secretStringTemplate: JSON.stringify({ username: 'dev', password: '' }),
-            generateStringKey: 'password',
-            excludeCharacters: '"@/\\',
-          },
-        });
+        // Reference existing secret for this environment
+        devCredentialsSecret = secretsmanager.Secret.fromSecretNameV2(this, 'StagingCredentialsSecret', devCredentialsSecretName);
       }
     }
 
@@ -154,8 +111,8 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     // Data Collection Lambda Functions
     const starGrowthCollector = new lambda.Function(this, 'StarGrowthCollector', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'star-collector.handler',
-      code: lambda.Code.fromAsset('../backend/scripts'),
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('../backend'),
       environment: {
         ENVIRONMENT: environment,
         STAR_GROWTH_TABLE: starGrowthTable.tableName,
@@ -170,8 +127,8 @@ export class OpenSourceTrackerStack extends cdk.Stack {
 
     const prVelocityCollector = new lambda.Function(this, 'PRVelocityCollector', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'pr-collector.handler',
-      code: lambda.Code.fromAsset('../backend/scripts'),
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('../backend'),
       environment: {
         ENVIRONMENT: environment,
         PR_VELOCITY_TABLE: prVelocityTable.tableName,
@@ -186,8 +143,8 @@ export class OpenSourceTrackerStack extends cdk.Stack {
 
     const issueHealthCollector = new lambda.Function(this, 'IssueHealthCollector', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'issue-collector.handler',
-      code: lambda.Code.fromAsset('../backend/scripts'),
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('../backend'),
       environment: {
         ENVIRONMENT: environment,
         ISSUE_HEALTH_TABLE: issueHealthTable.tableName,
@@ -202,8 +159,8 @@ export class OpenSourceTrackerStack extends cdk.Stack {
 
     const packageDownloadsCollector = new lambda.Function(this, 'PackageDownloadsCollector', {
       runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'package-collector.handler',
-      code: lambda.Code.fromAsset('../backend/scripts'),
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset('../backend'),
       environment: {
         ENVIRONMENT: environment,
         PACKAGE_DOWNLOADS_TABLE: packageDownloadsTable.tableName,
@@ -227,10 +184,10 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     githubTokenSecret.grantRead(packageDownloadsCollector);
 
     // EventBridge Rules for scheduled data collection
-    // Star growth: every 3 hours starting at 3:00 AM PDT (10:00 AM UTC)
+    // Star growth: using dataCollectionSchedule parameter
     const frequentDataCollectionRule = new events.Rule(this, 'FrequentDataCollectionRule', {
-      schedule: events.Schedule.expression('cron(0 10/3 * * ? *)'), // 10 AM UTC = 3 AM PDT, then every 3 hours
-      description: `Frequent data collection (every 3 hours starting 3:00 AM PDT) for ${environment} environment`,
+      schedule: events.Schedule.expression(dataCollectionSchedule),
+      description: `Frequent data collection (${dataCollectionSchedule}) for ${environment} environment`,
     });
 
     // PR velocity and issue health: once daily at 11:50 PM PST (7:50 AM UTC next day)

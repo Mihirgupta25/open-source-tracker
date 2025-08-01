@@ -2,10 +2,9 @@
 
 > **Track your GitHub repository's growth with beautiful, real-time analytics**
 
-A modern web application that automatically collects and visualizes key metrics for open source projects, including star growth, pull request velocity, issue health, and package downloads. Built with React, AWS, and deployed with automated CI/CD.
+A modern web application that automatically collects and visualizes key metrics for open source projects, including star growth, pull request velocity, issue health, and package downloads. Built with React 19, AWS, and deployed with automated CI/CD.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-blue?style=for-the-badge)](https://d14l4o1um83q49.cloudfront.net)
-[![Staging](https://img.shields.io/badge/Staging-Testing-orange?style=for-the-badge)](https://d1j9ixntt6x51n.cloudfront.net)
 
 ---
 
@@ -13,13 +12,14 @@ A modern web application that automatically collects and visualizes key metrics 
 
 ### Try It Now
 - **🌐 Production**: [https://d14l4o1um83q49.cloudfront.net](https://d14l4o1um83q49.cloudfront.net) (Public access)
-- **🧪 Staging**: [https://d1j9ixntt6x51n.cloudfront.net](https://d1j9ixntt6x51n.cloudfront.net) (Login: `dev` / `tracker2024`)
 
 ### What You'll See
 - 📈 **Star Growth**: Real-time GitHub star tracking every 3 hours
 - 🔄 **PR Velocity**: Daily pull request merge ratios
 - 🏥 **Issue Health**: Daily issue resolution metrics  
 - 📦 **Package Downloads**: Weekly npm download statistics
+- 🔄 **Multi-Repository Support**: Switch between multiple repositories seamlessly
+- 🎯 **Repository Tabs**: Track promptfoo, crewAI, and langchain repositories
 
 ---
 
@@ -30,18 +30,26 @@ A modern web application that automatically collects and visualizes key metrics 
 - **Beautiful Visualizations**: Interactive charts with hover tooltips and zoom capabilities
 - **Multi-Environment Support**: Separate staging and production environments
 - **Environment Detection**: Automatic API endpoint selection
+- **Multi-Repository Support**: Track multiple repositories with easy switching
+- **PST Timezone**: All timestamps automatically converted to Pacific Standard Time
+- **Consistent Branding**: Unified icon and styling across environments
 
 ### 🏗️ Modern Architecture
 - **Serverless**: AWS Lambda, DynamoDB, S3, CloudFront, API Gateway
 - **Scalable**: EventBridge scheduling, CloudWatch monitoring
 - **Secure**: AWS Secrets Manager for token management
 - **Automated**: GitHub Actions CI/CD pipeline
+- **React 19**: Latest React version with enhanced performance
 
 ### 🎨 User Experience
 - **Clean Design**: Card-based layout with professional aesthetics
 - **Responsive**: Works on desktop, tablet, and mobile
 - **Interactive**: Tabbed interface for easy navigation
 - **GitHub Integration**: Direct repository access via Octocat icon
+- **Local Storage**: Persistent user preferences and repository selections
+- **Repository Management**: Add, remove, and switch between repositories
+- **Custom App Icon**: Professional branding with consistent styling
+- **Auto-Correction**: Smart localStorage management for repository tabs
 
 ---
 
@@ -49,7 +57,7 @@ A modern web application that automatically collects and visualizes key metrics 
 
 | Metric | Frequency | Time | Description |
 |--------|-----------|------|-------------|
-| ⭐ Star Growth | Every 3 hours | Starting 3:00 AM PDT | Current GitHub star count |
+| ⭐ Star Growth | Every 3 hours | Starting 3:00 AM PST | Current GitHub star count |
 | 🔄 PR Velocity | Daily | 11:50 PM PST | Merged vs open PR ratios |
 | 🏥 Issue Health | Daily | 11:50 PM PST | Closed vs open issue ratios |
 | 📦 Package Downloads | Weekly | Sundays 11:50 PM PST | npm download statistics |
@@ -92,18 +100,19 @@ npm run cdk:prod
 For detailed information about our system architecture, data flow, and environment separation, see our **[Architecture Documentation](ARCHITECTURE.md)**.
 
 ### Quick Overview
-- **Frontend**: React app served via CloudFront CDN
+- **Frontend**: React 19 app served via CloudFront CDN
 - **Backend**: Serverless Lambda functions with API Gateway
 - **Database**: DynamoDB with separate staging/production tables
 - **Scheduling**: EventBridge for automated data collection
 - **Security**: AWS Secrets Manager for token management
+- **Multi-Repository**: Support for tracking multiple repositories simultaneously
 
 ---
 
 ## 🔧 Customization
 
 ### Adding New Metrics
-1. Create a new Lambda function in `backend/scripts/`
+1. Create a new Lambda function in `backend/`
 2. Add EventBridge rule for scheduling
 3. Update the frontend with new chart component
 4. Deploy via GitHub Actions
@@ -122,9 +131,6 @@ const frequentDataCollectionRule = new events.Rule(this, 'FrequentDataCollection
 ```bash
 # Update GitHub tokens
 aws secretsmanager update-secret --secret-id github-token-prod --secret-string "your_token"
-
-# Update staging credentials
-aws secretsmanager update-secret --secret-id staging-credentials --secret-string '{"username":"dev","password":"new_password"}'
 ```
 
 ---
@@ -152,6 +158,26 @@ aws s3 sync frontend/build/ s3://your-bucket-name --delete
 
 ## 🔍 Monitoring & Troubleshooting
 
+### Automation Scripts
+We provide several automation scripts for monitoring and management:
+
+```bash
+# Check automation status
+node scripts/check-automation.js
+
+# Test data collection
+node scripts/check-automation.js test
+
+# Manage databases
+node scripts/manage-databases.js
+
+# Copy production data to staging
+node scripts/copy-prod-to-staging.js
+
+# Deploy staging authentication
+node scripts/deploy-staging-auth.js
+```
+
 ### Viewing Logs
 ```bash
 # Lambda function logs
@@ -165,6 +191,9 @@ aws events list-rules --name-prefix "OpenSourceTracker"
 - **"Invalid Date" in charts**: Fixed with automatic timestamp format detection
 - **Duplicate data points**: Implemented duplicate removal logic
 - **Environment detection**: Updated to use CloudFront domain detection
+- **Multi-repository switching**: Local storage persistence for user preferences
+- **Timezone issues**: All timestamps now automatically converted to PST
+- **Missing repository tabs**: Auto-correction logic ensures all repositories are displayed
 
 ---
 
@@ -185,6 +214,40 @@ We welcome contributions! Here's how to get started:
 - Update documentation
 - Monitor CloudWatch logs
 - Use ApexCharts for new charts
+- Maintain multi-repository compatibility
+
+---
+
+## 🆕 Recent Updates (August 2025)
+
+### 🎯 Multi-Repository Support
+- **Added langchain repository**: Now tracking promptfoo, crewAI, and langchain repositories
+- **Repository initialization**: Easy setup of new repositories in production environment
+- **Auto-correction logic**: Smart localStorage management ensures all repository tabs are displayed
+- **Consistent data collection**: All repositories receive automated data collection
+
+### 🕐 Timezone Improvements
+- **PST conversion**: All timestamps automatically converted to Pacific Standard Time
+- **Consistent formatting**: Unified date/time display across all environments
+- **User-friendly timestamps**: "August 1, 2025 at 06:12:16 AM" format
+- **Database consistency**: All new data stored with PST timestamps
+
+### 🎨 Brand Identity
+- **Custom app icon**: Professional circular icon with consistent styling
+- **Unified branding**: Same icon and styling across staging and production
+- **Enhanced header**: Improved layout with app icon and title
+- **Responsive design**: Icon scales properly on all devices
+
+### 🔧 Technical Improvements
+- **Data migration scripts**: Automated copying of production data to staging
+- **Repository mapping**: Proper handling of crewAI repository name variations
+- **Frontend optimization**: Enhanced localStorage management and auto-correction
+- **Production deployment**: Streamlined deployment workflow with CloudFront invalidation
+
+### 🧹 Code Cleanup
+- **Removed unused scripts**: Cleaned up leftover files and unused code
+- **Optimized builds**: Reduced bundle sizes and improved performance
+- **Enhanced documentation**: Updated scripts and deployment procedures
 
 ---
 
@@ -206,12 +269,17 @@ We welcome contributions! Here's how to get started:
   - Add test data points directly from the UI
   - Simulate different data scenarios
   - Validate chart rendering with custom data
+- **Data Migration**: Automated scripts for copying production data to staging
+- **Repository Initialization**: Easy setup of new repositories in production environment
 
 ### 🔧 Development Enhancements
 - **Real-time Data Updates**: Live data refresh without page reload
 - **Export Functionality**: Download charts as images or data as CSV
 - **Advanced Filtering**: Filter data by date ranges and custom criteria
 - **Mobile Optimization**: Enhanced responsive design for mobile devices
+- **Repository Analytics**: Compare metrics across multiple repositories
+- **Timezone Consistency**: All environments use PST for timestamp display
+- **Brand Identity**: Consistent app icon and styling across all environments
 
 ---
 
@@ -225,7 +293,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **GitHub API**: For comprehensive repository data
 - **AWS CDK**: For infrastructure as code
-- **React & ApexCharts**: For beautiful UI
+- **React 19 & ApexCharts**: For beautiful UI
 - **EventBridge**: For reliable scheduling
 
 ---
@@ -234,8 +302,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **GitHub Issues**: [Create an issue](https://github.com/Mihirgupta25/open-source-tracker/issues)
 - **Documentation**: Check this README and inline code comments
-- **Live Demo**: [Production](https://d14l4o1um83q49.cloudfront.net) | [Staging](https://d1j9ixntt6x51n.cloudfront.net)
+- **Live Demo**: [Production](https://d14l4o1um83q49.cloudfront.net)
 
 ---
 
-*Last updated: July 28, 2025 - Enhanced UI with GitHub integration, clean production interface, updated chart descriptions, migrated to ApexCharts, and improved user experience.*
+*Last updated: August 2025 - Added langchain repository support, implemented PST timezone conversion, unified app branding across environments, enhanced localStorage auto-correction, improved data migration scripts, and optimized production deployment workflow.*

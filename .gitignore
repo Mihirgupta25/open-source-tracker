@@ -39,7 +39,12 @@ infrastructure/cdk.out/
 *.key
 
 # Credentials and sensitive files
-scripts/setup-dev-credentials.js
+# Removed unused script
+*.env
+*credentials*
+*secret*
+*password*
+*key*
 
 # IDE files
 .vscode/

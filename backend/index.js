@@ -12,6 +12,7 @@ const PR_VELOCITY_TABLE = process.env.PR_VELOCITY_TABLE;
 const ISSUE_HEALTH_TABLE = process.env.ISSUE_HEALTH_TABLE;
 const PACKAGE_DOWNLOADS_TABLE = process.env.PACKAGE_DOWNLOADS_TABLE;
 const GITHUB_TOKEN_SECRET_NAME = process.env.GITHUB_TOKEN_SECRET_NAME;
+const REPOSITORIES_TABLE = process.env.REPOSITORIES_TABLE || 'staging-repositories';
 const REPO = process.env.REPO || 'promptfoo/promptfoo';
 
 // Get GitHub token from Secrets Manager
@@ -23,6 +24,60 @@ async function getGitHubToken() {
   } catch (error) {
     console.error('Error getting GitHub token:', error);
     return null;
+  }
+}
+
+// Add repository to collection list
+async function addRepositoryToCollection(repo) {
+  try {
+    // Convert to PST timezone for added_at timestamp
+    const now = new Date();
+    const pstOffset = -8 * 60; // PST is UTC-8
+    const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+    
+    const params = {
+      TableName: REPOSITORIES_TABLE,
+      Item: {
+        environment: ENVIRONMENT,
+        repo: repo,
+        added_at: pstTime.toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          timeZone: 'America/Los_Angeles'
+        })
+      }
+    };
+    await dynamodb.put(params).promise();
+    console.log(`Added ${repo} to collection list`);
+    return true;
+  } catch (error) {
+    console.error('Error adding repository to collection:', error);
+    return false;
+  }
+}
+
+// Get list of repositories for collection
+async function getRepositoriesForCollection() {
+  try {
+    const params = {
+      TableName: REPOSITORIES_TABLE,
+      FilterExpression: '#env = :env',
+      ExpressionAttributeNames: {
+        '#env': 'environment'
+      },
+      ExpressionAttributeValues: {
+        ':env': ENVIRONMENT
+      }
+    };
+    const result = await dynamodb.scan(params).promise();
+    return result.Items.map(item => item.repo);
+  } catch (error) {
+    console.error('Error getting repositories for collection:', error);
+    return ['promptfoo/promptfoo']; // Fallback to default
   }
 }
 
@@ -54,7 +109,8 @@ async function storePRVelocity(repo, openCount, mergedCount) {
   const now = new Date();
   const pstOffset = -8 * 60; // PST is UTC-8
   const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
-  const date = pstTime.toISOString().split('T')[0]; // YYYY-MM-DD format
+  // Format date in PST timezone (YYYY-MM-DD format)
+  const date = pstTime.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // en-CA gives YYYY-MM-DD format
   const ratio = openCount > 0 ? (mergedCount / openCount).toFixed(2) : 0;
   
   const params = {
@@ -77,6 +133,57 @@ async function storePRVelocity(repo, openCount, mergedCount) {
   }
 }
 
+// Fetch issue data from GitHub
+async function fetchIssueData(repo, githubToken) {
+  try {
+    const headers = githubToken
+      ? { Authorization: `token ${githubToken}` }
+      : {};
+    
+    // Fetch all issues (both open and closed)
+    const response = await axios.get(`https://api.github.com/repos/${repo}/issues?state=all&per_page=100`, { headers });
+    const issues = response.data;
+    
+    const openCount = issues.filter(issue => issue.state === 'open').length;
+    const closedCount = issues.filter(issue => issue.state === 'closed').length;
+    
+    return { openCount, closedCount };
+  } catch (error) {
+    console.error('Error fetching issue data:', error);
+    throw error;
+  }
+}
+
+// Store issue health data in DynamoDB
+async function storeIssueHealth(repo, openCount, closedCount) {
+  // Convert to PST timezone
+  const now = new Date();
+  const pstOffset = -8 * 60; // PST is UTC-8
+  const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+  // Format date in PST timezone (YYYY-MM-DD format)
+  const date = pstTime.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // en-CA gives YYYY-MM-DD format
+  const ratio = openCount > 0 ? (closedCount / openCount).toFixed(2) : 0;
+  
+  const params = {
+    TableName: ISSUE_HEALTH_TABLE,
+    Item: {
+      repo: repo,
+      date: date,
+      open_count: openCount,
+      closed_count: closedCount,
+      ratio: parseFloat(ratio)
+    }
+  };
+
+  try {
+    await dynamodb.put(params).promise();
+    console.log(`Stored issue health for ${repo}: ${closedCount} closed, ${openCount} open, ratio: ${ratio}`);
+  } catch (error) {
+    console.error('Error storing issue health:', error);
+    throw error;
+  }
+}
+
 // Trigger PR velocity collection
 async function triggerPRVelocityCollection(targetRepo = REPO) {
   try {
@@ -93,6 +200,11 @@ async function triggerPRVelocityCollection(targetRepo = REPO) {
     
     console.log(`Successfully collected PR velocity data for ${targetRepo}`);
     
+    // Convert to PST timezone for response timestamp
+    const now = new Date();
+    const pstOffset = -8 * 60; // PST is UTC-8
+    const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+    
     return {
       success: true,
       message: 'PR velocity collection completed successfully',
@@ -100,7 +212,15 @@ async function triggerPRVelocityCollection(targetRepo = REPO) {
       openCount: openCount,
       mergedCount: mergedCount,
       ratio: openCount > 0 ? (mergedCount / openCount).toFixed(2) : 0,
-      timestamp: new Date().toISOString()
+      timestamp: pstTime.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'America/Los_Angeles'
+      })
     };
     
   } catch (error) {
@@ -114,13 +234,270 @@ async function triggerPRVelocityCollection(targetRepo = REPO) {
   }
 }
 
+// Trigger issue health collection
+async function triggerIssueHealthCollection(targetRepo = REPO) {
+  try {
+    console.log(`Starting issue health collection for ${targetRepo} in ${ENVIRONMENT} environment`);
+    
+    // Get GitHub token
+    const githubToken = await getGitHubToken();
+    
+    // Fetch issue data
+    const { openCount, closedCount } = await fetchIssueData(targetRepo, githubToken);
+    
+    // Store in DynamoDB
+    await storeIssueHealth(targetRepo, openCount, closedCount);
+    
+    console.log(`Successfully collected issue health data for ${targetRepo}`);
+    
+    // Convert to PST timezone for response timestamp
+    const now = new Date();
+    const pstOffset = -8 * 60; // PST is UTC-8
+    const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+    
+    return {
+      success: true,
+      message: 'Issue health collection completed successfully',
+      repo: targetRepo,
+      openCount: openCount,
+      closedCount: closedCount,
+      ratio: openCount > 0 ? (closedCount / openCount).toFixed(2) : 0,
+      timestamp: pstTime.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'America/Los_Angeles'
+      })
+    };
+    
+  } catch (error) {
+    console.error('Error in issue health collection:', error);
+    
+    return {
+      success: false,
+      error: 'Issue health collection failed',
+      message: error.message
+    };
+  }
+}
+
+// Fetch star count from GitHub API
+async function fetchStarCount(repo, githubToken) {
+  try {
+    const headers = githubToken
+      ? { Authorization: `token ${githubToken}` }
+      : {};
+    
+    const response = await axios.get(`https://api.github.com/repos/${repo}`, { headers });
+    return response.data.stargazers_count;
+  } catch (error) {
+    console.error('Error fetching star count:', error);
+    throw error;
+  }
+}
+
+// Store star count in DynamoDB
+async function storeStarCount(repo, starCount) {
+  // Convert to PST timezone
+  const now = new Date();
+  const pstOffset = -8 * 60; // PST is UTC-8
+  const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+  
+  // Format as "month day, year" (e.g., "July 25, 2025")
+  const timestamp = pstTime.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  // Check if an entry already exists for today
+  const existingParams = {
+    TableName: STAR_GROWTH_TABLE,
+    KeyConditionExpression: 'repo = :repo',
+    FilterExpression: 'begins_with(timestamp, :datePrefix)',
+    ExpressionAttributeValues: {
+      ':repo': repo,
+      ':datePrefix': timestamp.split(',')[0] // Get just the month and day part
+    }
+  };
+  
+  try {
+    const existingResult = await dynamodb.query(existingParams).promise();
+    
+    if (existingResult.Items.length > 0) {
+      console.log(`Entry already exists for ${repo} on ${timestamp}, skipping duplicate`);
+      return {
+        message: 'Entry already exists for today',
+        repo: repo,
+        starCount: starCount,
+        timestamp: timestamp
+      };
+    }
+    
+    // No existing entry, proceed to store
+    const params = {
+      TableName: STAR_GROWTH_TABLE,
+      Item: {
+        repo: repo,
+        timestamp: timestamp,
+        count: starCount
+      }
+    };
+
+    await dynamodb.put(params).promise();
+    console.log(`Stored star count for ${repo}: ${starCount} at ${timestamp}`);
+    
+    return {
+      message: 'Star count stored successfully',
+      repo: repo,
+      starCount: starCount,
+      timestamp: timestamp
+    };
+  } catch (error) {
+    console.error('Error storing star count:', error);
+    throw error;
+  }
+}
+
+// Trigger star collection
+async function triggerStarCollection(targetRepo = REPO) {
+  try {
+    console.log(`🚀 Starting star collection for ${targetRepo} in ${ENVIRONMENT} environment`);
+    
+    // Call the unified collector instead of doing the work here
+    const lambda = new AWS.Lambda();
+    // Convert to PST timezone for event timestamp
+    const now = new Date();
+    const pstOffset = -8 * 60; // PST is UTC-8
+    const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+    
+    const event = {
+      source: 'staging-star-collection-3hr',
+      timestamp: pstTime.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: 'America/Los_Angeles'
+      })
+    };
+    
+    console.log(`📤 Invoking unified collector with event:`, event);
+    
+    const result = await lambda.invoke({
+      FunctionName: 'staging-unified-collector',
+      Payload: JSON.stringify(event),
+      InvocationType: 'RequestResponse'
+    }).promise();
+    
+    console.log(`📊 Unified collector result:`, result);
+    
+    if (result.StatusCode === 200) {
+      const payload = JSON.parse(result.Payload.toString());
+      console.log(`✅ Unified collector completed successfully`);
+      
+      return {
+        success: true,
+        message: 'Star collection completed via unified collector',
+        repo: targetRepo,
+        unifiedCollectorResponse: payload
+      };
+    } else {
+      throw new Error(`Unified collector failed with status: ${result.StatusCode}`);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error in star collection:', error);
+    console.error('❌ Error stack:', error.stack);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+// Manual star collection that handles crewAI repository correctly
+async function triggerManualStarCollection(targetRepo = REPO) {
+  try {
+    console.log(`Starting manual star collection for ${targetRepo} in ${ENVIRONMENT} environment`);
+    
+    // Get GitHub token
+    const githubToken = await getGitHubToken();
+    
+    // Handle crewAI repository mapping
+    let githubRepo = targetRepo;
+    let dbRepo = targetRepo;
+    
+    if (targetRepo === 'crewAI/crewAI') {
+      githubRepo = 'crewAIInc/crewAI'; // Use the correct GitHub repository
+      dbRepo = 'crewAI/crewAI'; // Keep the original name for database consistency
+    }
+    
+    // Fetch current star count from GitHub
+    const starCount = await fetchStarCount(githubRepo, githubToken);
+    
+    // Store in DynamoDB with the original repository name
+    // Convert to PST timezone
+    const now = new Date();
+    const pstOffset = -8 * 60; // PST is UTC-8
+    const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+    
+    // Format as "month day, year" (e.g., "July 25, 2025")
+    const timestamp = pstTime.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    
+    const params = {
+      TableName: STAR_GROWTH_TABLE,
+      Item: {
+        repo: dbRepo,
+        timestamp: timestamp,
+        starCount: starCount,
+        note: `Manual entry from ${githubRepo}`
+      }
+    };
+    
+    await dynamodb.put(params).promise();
+    
+    console.log(`Successfully collected manual star data for ${dbRepo}: ${starCount} stars (from ${githubRepo})`);
+    
+    return {
+      success: true,
+      message: 'Manual star count stored successfully',
+      repo: dbRepo,
+      starCount: starCount,
+      timestamp: timestamp,
+      githubRepo: githubRepo
+    };
+  } catch (error) {
+    console.error('Error in manual star collection:', error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
 // DynamoDB helper functions
 async function queryStarHistory(repo) {
+  // Handle crewAI repository mapping
+  let dbRepo = repo;
+  if (repo === 'crewAI/crewAI') {
+    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
+  }
+  
   const params = {
     TableName: STAR_GROWTH_TABLE,
     KeyConditionExpression: 'repo = :repo',
     ExpressionAttributeValues: {
-      ':repo': repo
+      ':repo': dbRepo
     },
     ScanIndexForward: true
   };
@@ -130,11 +507,17 @@ async function queryStarHistory(repo) {
 }
 
 async function queryPRVelocity(repo) {
+  // Handle crewAI repository mapping
+  let dbRepo = repo;
+  if (repo === 'crewAI/crewAI') {
+    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
+  }
+  
   const params = {
     TableName: PR_VELOCITY_TABLE,
     KeyConditionExpression: 'repo = :repo',
     ExpressionAttributeValues: {
-      ':repo': repo
+      ':repo': dbRepo
     },
     ScanIndexForward: true
   };
@@ -144,11 +527,17 @@ async function queryPRVelocity(repo) {
 }
 
 async function queryIssueHealth(repo) {
+  // Handle crewAI repository mapping
+  let dbRepo = repo;
+  if (repo === 'crewAI/crewAI') {
+    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
+  }
+  
   const params = {
     TableName: ISSUE_HEALTH_TABLE,
     KeyConditionExpression: 'repo = :repo',
     ExpressionAttributeValues: {
-      ':repo': repo
+      ':repo': dbRepo
     },
     ScanIndexForward: true
   };
@@ -158,11 +547,17 @@ async function queryIssueHealth(repo) {
 }
 
 async function queryPackageDownloads(repo) {
+  // Handle crewAI repository mapping
+  let dbRepo = repo;
+  if (repo === 'crewAI/crewAI') {
+    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
+  }
+  
   const params = {
     TableName: PACKAGE_DOWNLOADS_TABLE,
     KeyConditionExpression: 'repo = :repo',
     ExpressionAttributeValues: {
-      ':repo': repo
+      ':repo': dbRepo
     },
     ScanIndexForward: true
   };
@@ -179,43 +574,25 @@ async function resetStagingData() {
       throw new Error('Reset only allowed in staging environment');
     }
 
-    const repo = 'promptfoo/promptfoo';
-    let itemsCopied = 0;
+    // Get all repositories from the collection
+    const repos = await getRepositoriesForCollection();
+    let totalItemsCleared = 0;
 
-    // Get production data from prod tables
-    const prodStarHistory = await queryStarHistoryFromTable('prod-star-growth', repo);
-    const prodPRVelocity = await queryPRVelocityFromTable('prod-pr-velocity', repo);
-    const prodIssueHealth = await queryIssueHealthFromTable('prod-issue-health', repo);
-    const prodPackageDownloads = await queryPackageDownloadsFromTable('prod-package-downloads', repo);
-
-    // Clear staging tables
-    await clearTable(STAR_GROWTH_TABLE, repo);
-    await clearTable(PR_VELOCITY_TABLE, repo);
-    await clearTable(ISSUE_HEALTH_TABLE, repo);
-    await clearTable(PACKAGE_DOWNLOADS_TABLE, repo);
-
-    // Copy production data to staging tables
-    if (prodStarHistory.length > 0) {
-      await batchWriteItems(STAR_GROWTH_TABLE, prodStarHistory);
-      itemsCopied += prodStarHistory.length;
+    // Clear data for all repositories
+    for (const repo of repos) {
+      console.log(`Clearing data for repository: ${repo}`);
+      
+      // Clear staging tables for this repository
+      const starItems = await clearTable(STAR_GROWTH_TABLE, repo);
+      const prItems = await clearTable(PR_VELOCITY_TABLE, repo);
+      const issueItems = await clearTable(ISSUE_HEALTH_TABLE, repo);
+      const packageItems = await clearTable(PACKAGE_DOWNLOADS_TABLE, repo);
+      
+      totalItemsCleared += starItems + prItems + issueItems + packageItems;
     }
 
-    if (prodPRVelocity.length > 0) {
-      await batchWriteItems(PR_VELOCITY_TABLE, prodPRVelocity);
-      itemsCopied += prodPRVelocity.length;
-    }
-
-    if (prodIssueHealth.length > 0) {
-      await batchWriteItems(ISSUE_HEALTH_TABLE, prodIssueHealth);
-      itemsCopied += prodIssueHealth.length;
-    }
-
-    if (prodPackageDownloads.length > 0) {
-      await batchWriteItems(PACKAGE_DOWNLOADS_TABLE, prodPackageDownloads);
-      itemsCopied += prodPackageDownloads.length;
-    }
-
-    return { success: true, itemsCopied };
+    console.log(`Reset completed. Cleared ${totalItemsCleared} items from staging tables.`);
+    return { success: true, itemsCleared: totalItemsCleared };
   } catch (error) {
     console.error('Error resetting staging data:', error);
     throw error;
@@ -431,6 +808,63 @@ exports.handler = async (event) => {
       const prVelocityResult = await triggerPRVelocityCollection(targetRepo);
       response = prVelocityResult;
 
+    } else if (path === '/api/trigger-issue-health' && httpMethod === 'POST') {
+      const body = JSON.parse(event.body);
+      const { repo } = body;
+      const targetRepo = repo || REPO;
+      const issueHealthResult = await triggerIssueHealthCollection(targetRepo);
+      response = issueHealthResult;
+
+    } else if (path === '/api/trigger-star-collection' && httpMethod === 'POST') {
+      console.log('🎯 Trigger star collection endpoint called');
+      console.log('📦 Request body:', event.body);
+      
+      const body = JSON.parse(event.body);
+      const { repo } = body;
+      const targetRepo = repo || REPO;
+      
+      console.log('📊 Request parameters:', { repo, targetRepo });
+      
+      const starResult = await triggerStarCollection(targetRepo);
+      console.log('📤 Star collection result:', starResult);
+      
+      response = starResult;
+
+    } else if (path === '/api/manual-star-collection' && httpMethod === 'POST') {
+      const body = JSON.parse(event.body);
+      const { repo } = body;
+      const targetRepo = repo || REPO;
+      const manualStarResult = await triggerManualStarCollection(targetRepo);
+      response = manualStarResult;
+
+    } else if (path === '/api/collection-repos' && httpMethod === 'GET') {
+      // Get list of repositories in automated collection
+      const repos = await getRepositoriesForCollection();
+      response = {
+        repositories: repos,
+        environment: ENVIRONMENT
+      };
+
+    } else if (path === '/api/collection-repos' && httpMethod === 'POST') {
+      // Add repository to automated collection
+      const body = JSON.parse(event.body);
+      const { repo } = body;
+      
+      if (!repo) {
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Missing repo parameter' })
+        };
+      }
+      
+      const added = await addRepositoryToCollection(repo);
+      response = {
+        success: added,
+        message: added ? `Repository ${repo} added to automated collection` : `Failed to add repository ${repo} to collection`,
+        repo: repo
+      };
+
     } else if (path === '/api/initialize-repo' && httpMethod === 'POST') {
       const body = JSON.parse(event.body);
       const { repo } = body;
@@ -457,15 +891,23 @@ exports.handler = async (event) => {
           const now = new Date();
           const pstOffset = -8 * 60;
           const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
-          const date = pstTime.toISOString().split('T')[0];
+          const date = pstTime.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }); // en-CA gives YYYY-MM-DD format
           
           // Initialize with current star count
           const starCount = githubResponse.data.stargazers_count;
+          
+          // Use existing pstTime for timestamp formatting
+          const timestamp = pstTime.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          });
+          
           const starParams = {
             TableName: STAR_GROWTH_TABLE,
             Item: {
               repo: repo,
-              timestamp: now.toISOString(),
+              timestamp: timestamp,
               count: starCount
             }
           };
@@ -492,15 +934,19 @@ exports.handler = async (event) => {
           };
           await dynamodb.put(issueParams).promise();
           
+          // Add repository to collection list for automated data collection
+          const addedToCollection = await addRepositoryToCollection(repo);
+          
           response = {
             success: true,
-            message: `Repository ${repo} initialized successfully`,
+            message: `Repository ${repo} initialized successfully${addedToCollection ? ' and added to automated collection' : ''}`,
             repo: repo,
             starCount: starCount,
             openPRs: openCount,
             mergedPRs: mergedCount,
             openIssues: openIssues,
-            closedIssues: closedIssues
+            closedIssues: closedIssues,
+            addedToCollection: addedToCollection
           };
         } else {
           response = {

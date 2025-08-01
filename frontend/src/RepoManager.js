@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const RepoManager = ({ 
   activeRepo, 
@@ -6,6 +6,7 @@ const RepoManager = ({
   repos, 
   setRepos, 
   onRepoChange,
+  onRepoRemove,
   isStaging 
 }) => {
   const [newRepo, setNewRepo] = useState('');
@@ -76,13 +77,7 @@ const RepoManager = ({
       return;
     }
 
-    const updatedRepos = repos.filter(repo => repo !== repoToRemove);
-    setRepos(updatedRepos);
-    
-    if (activeRepo === repoToRemove) {
-      setActiveRepo(updatedRepos[0]);
-      onRepoChange(updatedRepos[0]);
-    }
+    onRepoRemove(repoToRemove);
   };
 
   if (!isStaging) {

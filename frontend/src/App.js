@@ -6,8 +6,8 @@ import RepoManager from './RepoManager';
 // API base URL - detect environment and use appropriate endpoint
 const getApiBaseUrl = () => {
   // Check if we're on staging environment
-  if (window.location.hostname.includes('d1j9ixntt6x51n')) {
-    return 'https://k3wr4zoexk.execute-api.us-east-1.amazonaws.com/prod';
+  if (window.location.hostname.includes('d1j9ixntt6x51n') || window.location.hostname.includes('d3k6epgbykuj3')) {
+    return 'https://fw8kgqo954.execute-api.us-east-1.amazonaws.com/prod';
   }
   // Default to production
   return process.env.REACT_APP_API_URL || 'https://fwaonagbbh.execute-api.us-east-1.amazonaws.com/prod';
@@ -21,8 +21,31 @@ function App() {
   const [starHistory, setStarHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('promptfoo');
-  const [repoTabs, setRepoTabs] = useState({ 'promptfoo/promptfoo': 'promptfoo' });
+  const [activeTab, setActiveTab] = useState(() => {
+    // Load active tab from localStorage if available, otherwise use default
+    const savedActiveTab = localStorage.getItem('active-tab');
+    return savedActiveTab || 'promptfoo';
+  });
+  
+  const [repoTabs, setRepoTabs] = useState(() => {
+    // Load repo tabs from localStorage if available, otherwise use default
+    const savedRepoTabs = localStorage.getItem('repo-tabs');
+    const defaultRepoTabs = { 'promptfoo/promptfoo': 'promptfoo', 'crewAIInc/crewAI': 'crewAI', 'langchain-ai/langchain': 'langchain' };
+    
+    if (savedRepoTabs) {
+      const parsedRepoTabs = JSON.parse(savedRepoTabs);
+      // Check if the saved tabs include all three repositories
+      const hasAllTabs = Object.keys(defaultRepoTabs).every(repo => parsedRepoTabs[repo]);
+      if (hasAllTabs) {
+        return parsedRepoTabs;
+      } else {
+        // If not all tabs are present, use defaults and clear localStorage
+        localStorage.removeItem('repo-tabs');
+        return defaultRepoTabs;
+      }
+    }
+    return defaultRepoTabs;
+  });
   const [prVelocity, setPrVelocity] = useState([]);
   const [issueHealth, setIssueHealth] = useState([]);
   const [packageDownloads, setPackageDownloads] = useState([]);
@@ -40,10 +63,57 @@ function App() {
   // Force chart re-render when data is reset
   const [chartKey, setChartKey] = useState(0);
 
-  // Multi-repository support (staging only)
-  const [repos, setRepos] = useState(['promptfoo/promptfoo']);
-  const [activeRepo, setActiveRepo] = useState('promptfoo/promptfoo');
-  const isStaging = window.location.hostname.includes('d1j9ixntt6x51n');
+
+  // Multi-repository support
+  const [repos, setRepos] = useState(() => {
+    // Load repositories from localStorage if available, otherwise use default
+    const savedRepos = localStorage.getItem('repos');
+    const defaultRepos = ['promptfoo/promptfoo', 'crewAIInc/crewAI', 'langchain-ai/langchain'];
+    
+    if (savedRepos) {
+      const parsedRepos = JSON.parse(savedRepos);
+      // Check if the saved repos include all three repositories
+      const hasAllRepos = defaultRepos.every(repo => parsedRepos.includes(repo));
+      if (hasAllRepos) {
+        return parsedRepos;
+      } else {
+        // If not all repos are present, use defaults and clear localStorage
+        localStorage.removeItem('repos');
+        return defaultRepos;
+      }
+    }
+    return defaultRepos;
+  });
+  
+  const [activeRepo, setActiveRepo] = useState(() => {
+    // Load active repository from localStorage if available, otherwise use default
+    const savedActiveRepo = localStorage.getItem('active-repo');
+    return savedActiveRepo || 'promptfoo/promptfoo';
+  });
+  
+  const isStaging = window.location.hostname.includes('d1j9ixntt6x51n') || window.location.hostname.includes('d3k6epgbykuj3');
+
+  // Save repositories to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('repos', JSON.stringify(repos));
+  }, [repos]);
+
+  // Save active repository to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('active-repo', activeRepo);
+  }, [activeRepo, isStaging]);
+
+  // Save active tab to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('active-tab', activeTab);
+  }, [activeTab]);
+
+  // Save repo tabs to localStorage whenever they change (staging only)
+  useEffect(() => {
+    if (isStaging) {
+      localStorage.setItem('staging-repo-tabs', JSON.stringify(repoTabs));
+    }
+  }, [repoTabs, isStaging]);
 
   function parseRepo(input) {
     const match = input.match(/github\.com\/(.+?\/[^/#?]+)/);
@@ -71,71 +141,142 @@ function App() {
 
   // Function to handle repository changes
   const handleRepoChange = (newRepo) => {
+    console.log('🔄 Repository change triggered...');
+    console.log('📊 Previous active repo:', activeRepo);
+    console.log('📊 New repo:', newRepo);
+    console.log('📊 Current repo tabs:', repoTabs);
+    
     setActiveRepo(newRepo);
+    console.log('✅ Active repo state updated');
+    
     // Initialize tab for new repository if it doesn't exist
     if (!repoTabs[newRepo]) {
       const repoName = newRepo.split('/')[1] || newRepo;
+      console.log('📊 Creating new tab for repo:', repoName);
       setRepoTabs(prev => ({ ...prev, [newRepo]: repoName }));
       setActiveTab(repoName);
+      console.log('✅ New tab created and set as active');
     } else {
+      console.log('📊 Using existing tab:', repoTabs[newRepo]);
       setActiveTab(repoTabs[newRepo]);
+      console.log('✅ Existing tab set as active');
     }
+    
     // Clear current data when switching repos
+    console.log('🧹 Clearing current data...');
     setStarHistory([]);
     setPrVelocity([]);
     setIssueHealth([]);
     setPackageDownloads([]);
     setChartKey(prev => prev + 1);
+    console.log('✅ Data cleared and chart key updated');
+  };
+
+  // Function to handle repository removal and cleanup
+  const handleRepoRemove = (repoToRemove) => {
+    // Remove from repos list
+    const updatedRepos = repos.filter(repo => repo !== repoToRemove);
+    setRepos(updatedRepos);
+    
+    // Clean up tab mapping
+    setRepoTabs(prev => {
+      const newRepoTabs = { ...prev };
+      delete newRepoTabs[repoToRemove];
+      return newRepoTabs;
+    });
+    
+    // If the removed repo was active, switch to the first available repo
+    if (activeRepo === repoToRemove) {
+      const newActiveRepo = updatedRepos[0];
+      setActiveRepo(newActiveRepo);
+      setActiveTab(repoTabs[newActiveRepo] || newActiveRepo.split('/')[1] || newActiveRepo);
+    }
   };
 
   // Fetch star history for the active repository
   useEffect(() => {
     async function fetchHistory() {
+      console.log('🔄 Starting star history fetch...');
+      console.log('📊 Active repo:', activeRepo);
+      console.log('📊 API base URL:', API_BASE_URL);
+      
       try {
-          const res = await fetch(`${API_BASE_URL}/api/star-history?repo=${activeRepo}`);
-  const data = await res.json();
+        const url = `${API_BASE_URL}/api/star-history?repo=${activeRepo}`;
+        console.log('📡 Fetching from URL:', url);
+        
+        const res = await fetch(url);
+        console.log('📊 Response status:', res.status);
+        console.log('📊 Response headers:', Object.fromEntries(res.headers.entries()));
+        
+        const data = await res.json();
+        console.log('📊 Response data type:', typeof data);
+        console.log('📊 Response data:', data);
+        
         if (Array.isArray(data)) {
-          const processedData = data.map(d => ({
-            ...d,
-            // Keep original timestamp for chart, but format for display
-            timestamp: d.timestamp,
-            displayTimestamp: (() => {
-              let dateObj;
-              if (d.timestamp.includes('T') && d.timestamp.includes('Z')) {
-                // ISO format: "2025-07-27T01:00:11.206Z"
-                dateObj = new Date(d.timestamp);
-              } else if (d.timestamp.includes(',') && d.timestamp.includes(' ')) {
-                // New format: "July 25, 2025"
-                dateObj = new Date(d.timestamp);
-              } else {
-                // Old format: "2025-07-25 07:20:00" - treat as local time
-                dateObj = new Date(d.timestamp.replace(' ', 'T'));
-              }
-              return dateObj.toLocaleString(undefined, {
-                year: 'numeric', month: 'long', day: 'numeric',
-                hour: '2-digit', minute: '2-digit', hour12: true
-              });
-            })()
-          }));
+          console.log('✅ Data is array, processing...');
+          console.log('📊 Array length:', data.length);
           
+          const processedData = data.map((d, index) => {
+            console.log(`📊 Processing item ${index}:`, d);
+            
+            return {
+              ...d,
+              // Keep original timestamp for chart, but format for display
+              timestamp: d.timestamp,
+              displayTimestamp: (() => {
+                let dateObj;
+                console.log(`📅 Processing timestamp for item ${index}:`, d.timestamp);
+                
+                if (d.timestamp.includes('T') && d.timestamp.includes('Z')) {
+                  // ISO format: "2025-07-27T01:00:11.206Z"
+                  console.log(`📅 ISO format detected for item ${index}`);
+                  dateObj = new Date(d.timestamp);
+                } else if (d.timestamp.includes(',') && d.timestamp.includes(' ')) {
+                  // New format: "July 25, 2025"
+                  console.log(`📅 New format detected for item ${index}`);
+                  dateObj = new Date(d.timestamp);
+                } else {
+                  // Old format: "2025-07-25 07:20:00" - treat as local time
+                  console.log(`📅 Old format detected for item ${index}`);
+                  dateObj = new Date(d.timestamp.replace(' ', 'T'));
+                }
+                
+                // Convert to PST timezone for display
+                const pstOffset = -8 * 60; // PST is UTC-8
+                const pstTime = new Date(dateObj.getTime() + (pstOffset * 60 * 1000));
+                
+                const formatted = pstTime.toLocaleString('en-US', {
+                  year: 'numeric', month: 'long', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit', hour12: true,
+                  timeZone: 'America/Los_Angeles'
+                });
+                console.log(`📅 Formatted timestamp for item ${index}:`, formatted);
+                return formatted;
+              })()
+            };
+          });
+          
+          console.log('✅ Processed data:', processedData);
           setStarHistory(processedData);
+          console.log('✅ Star history state updated');
         } else if (data && data.error) {
-          console.error('📊 Star history error:', data.error);
+          console.error('❌ Star history error:', data.error);
           setError('Failed to load star history: ' + data.error);
         } else {
-          console.error('📊 Unexpected star history response:', data);
+          console.error('❌ Unexpected star history response:', data);
           setError('Failed to load star history: Unexpected response');
         }
       } catch (err) {
-        console.error('📊 Star history fetch error:', err);
+        console.error('❌ Star history fetch error:', err);
+        console.error('❌ Error details:', { message: err.message, stack: err.stack, name: err.name });
         setError('Failed to load star history: ' + err.message);
       }
     }
     fetchHistory();
-  }, []);
+  }, [activeRepo]);
 
   useEffect(() => {
-            if (activeTab === repoTabs[activeRepo]) {
+            if (activeTab === repoTabs[activeRepo] || activeTab === 'promptfoo') {
       async function fetchPrVelocity() {
         try {
           const res = await fetch(`${API_BASE_URL}/api/pr-velocity?repo=${activeRepo}`);
@@ -298,14 +439,18 @@ function App() {
 
   // Function to trigger immediate star data collection (staging only)
   const triggerStarCollection = async () => {
-    if (!window.location.hostname.includes('d1j9ixntt6x51n')) {
+    if (!isStaging) {
+      console.log('❌ Not in staging environment, skipping');
       return; // Only allow on staging environment
     }
     
+    console.log('🚀 Starting star collection for:', activeRepo);
+    console.log('📡 API Base URL:', API_BASE_URL);
+    
     setIsCollectingData(true);
     try {
-      // Call the trigger Lambda function directly
-      const response = await fetch('https://t06z2gxah5.execute-api.us-east-1.amazonaws.com/prod/trigger-star-collection', {
+      // Call the HTTP wrapper for star collection
+      const response = await fetch('https://k3wr4zoexk.execute-api.us-east-1.amazonaws.com/prod/api/trigger-star-collection', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -313,12 +458,20 @@ function App() {
         body: JSON.stringify({ repo: activeRepo })
       });
       
+      console.log('📡 API Response Status:', response.status);
+      console.log('📡 API Response Headers:', Object.fromEntries(response.headers.entries()));
+      
       const data = await response.json();
+      console.log('📊 API Response Data:', data);
       
       if (response.ok && data.success) {
         // Refresh the star history data
+        console.log('🔄 Refreshing star history data...');
         const historyResponse = await fetch(`${API_BASE_URL}/api/star-history?repo=${activeRepo}`);
+        console.log('📡 History Response Status:', historyResponse.status);
+        
         const historyData = await historyResponse.json();
+        console.log('📊 Star History Data:', historyData);
         
         if (Array.isArray(historyData)) {
           const processedData = historyData.map(d => ({
@@ -333,31 +486,47 @@ function App() {
               } else {
                 dateObj = new Date(d.timestamp.replace(' ', 'T'));
               }
-              return dateObj.toLocaleString(undefined, {
+              // Convert to PST timezone for display
+              const pstOffset = -8 * 60; // PST is UTC-8
+              const pstTime = new Date(dateObj.getTime() + (pstOffset * 60 * 1000));
+              
+              return pstTime.toLocaleString('en-US', {
                 year: 'numeric', month: 'long', day: 'numeric',
-                hour: '2-digit', minute: '2-digit', hour12: true
+                hour: '2-digit', minute: '2-digit', hour12: true,
+                timeZone: 'America/Los_Angeles'
               });
             })()
           }));
           
           setStarHistory(processedData);
+          console.log('✅ Star history updated successfully');
         }
         
         alert('✅ New star data point created successfully!');
       } else {
+        console.error('❌ API returned error:', data);
         throw new Error(data.error || 'Failed to trigger star data collection');
       }
     } catch (error) {
-      console.error('Error triggering star data collection:', error);
-      alert('❌ Failed to create new star data point: ' + error.message);
+      console.error('❌ Error triggering star data collection:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      alert('❌ Failed to create star data point: ' + error.message);
     } finally {
       setIsCollectingData(false);
+      console.log('🏁 Star collection process completed');
     }
   };
 
+  // Function to manually fetch and add star count from GitHub (staging only)
+
+
   // Function to trigger immediate PR velocity data collection (staging only)
   const triggerPRVelocityCollection = async () => {
-    if (!window.location.hostname.includes('d1j9ixntt6x51n')) {
+    if (!isStaging) {
       return; // Only allow on staging environment
     }
     
@@ -385,8 +554,13 @@ function App() {
             date: d.date,
             displayDate: (() => {
               const dateObj = new Date(d.date);
-              return dateObj.toLocaleDateString(undefined, {
-                year: 'numeric', month: 'long', day: 'numeric'
+              // Convert to PST timezone for display
+              const pstOffset = -8 * 60; // PST is UTC-8
+              const pstTime = new Date(dateObj.getTime() + (pstOffset * 60 * 1000));
+              
+              return pstTime.toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric',
+                timeZone: 'America/Los_Angeles'
               });
             })()
           }));
@@ -406,15 +580,71 @@ function App() {
     }
   };
 
+  // Function to trigger immediate issue health data collection (staging only)
+  const triggerIssueHealthCollection = async () => {
+    if (!isStaging) {
+      return; // Only allow on staging environment
+    }
+    
+    setIsCollectingData(true);
+    try {
+      // Call the trigger issue health endpoint
+      const response = await fetch(`${API_BASE_URL}/api/trigger-issue-health`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ repo: activeRepo })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Refresh the issue health data
+        const issueHealthResponse = await fetch(`${API_BASE_URL}/api/issue-health?repo=${activeRepo}`);
+        const issueHealthData = await issueHealthResponse.json();
+        
+        if (Array.isArray(issueHealthData)) {
+          const processedData = issueHealthData.map(d => ({
+            ...d,
+            date: d.date,
+            displayDate: (() => {
+              const dateObj = new Date(d.date);
+              // Convert to PST timezone for display
+              const pstOffset = -8 * 60; // PST is UTC-8
+              const pstTime = new Date(dateObj.getTime() + (pstOffset * 60 * 1000));
+              
+              return pstTime.toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric',
+                timeZone: 'America/Los_Angeles'
+              });
+            })()
+          }));
+          
+          setIssueHealth(processedData);
+        }
+        
+        alert('✅ New issue health data point created successfully!');
+      } else {
+        throw new Error(data.error || 'Failed to trigger issue health data collection');
+      }
+    } catch (error) {
+      console.error('Error triggering issue health data collection:', error);
+      alert('❌ Failed to create new issue health data point: ' + error.message);
+    } finally {
+      setIsCollectingData(false);
+    }
+  };
+
   // Function to reset staging data with production data (staging only)
   const resetStagingData = async () => {
-    if (!window.location.hostname.includes('d1j9ixntt6x51n')) {
+    if (!isStaging) {
       return; // Only allow on staging environment
     }
     
     setIsResettingData(true);
     try {
-      const response = await fetch('https://j4o79e11f9.execute-api.us-east-1.amazonaws.com/prod/reset-staging-data', {
+      const response = await fetch(`${API_BASE_URL}/api/reset-staging-data`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -453,9 +683,14 @@ function App() {
                 } else {
                   dateObj = new Date(d.timestamp.replace(' ', 'T'));
                 }
-                return dateObj.toLocaleString(undefined, {
+                // Convert to PST timezone for display
+                const pstOffset = -8 * 60; // PST is UTC-8
+                const pstTime = new Date(dateObj.getTime() + (pstOffset * 60 * 1000));
+                
+                return pstTime.toLocaleString('en-US', {
                   year: 'numeric', month: 'long', day: 'numeric',
-                  hour: '2-digit', minute: '2-digit', hour12: true
+                  hour: '2-digit', minute: '2-digit', hour12: true,
+                  timeZone: 'America/Los_Angeles'
                 });
               })()
             }));
@@ -520,7 +755,7 @@ function App() {
           console.error('Error refreshing data after reset:', error);
         }
         
-        alert(`✅ Staging data reset successfully! Copied ${data.itemsCopied} items from production.`);
+        alert(`✅ Staging data reset successfully! Cleared all staging data.`);
       } else {
         throw new Error(data.error || 'Failed to reset staging data');
       }
@@ -613,7 +848,7 @@ function App() {
 
   return (
     <div className="App">
-      {/* Header with GitHub Octocat */}
+      {/* Header with custom icon and GitHub Octocat */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -623,8 +858,39 @@ function App() {
         marginBottom: '24px',
         position: 'relative'
       }}>
-        {/* Invisible spacer to balance the GitHub icon */}
-        <div style={{ width: '24px', visibility: 'hidden' }}></div>
+        {/* Custom app icon on the left */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            backgroundColor: '#f3f4f6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '1px solid #e5e7eb'
+          }}>
+            <svg 
+              width="20" 
+              height="20" 
+              viewBox="0 0 20 20" 
+              fill="#6b7280"
+            >
+              <path d="M10 2C8.9 2 8 2.9 8 4C8 5.1 8.9 6 10 6C11.1 6 12 5.1 12 4C12 2.9 11.1 2 10 2ZM10 18C8.9 18 8 17.1 8 16C8 14.9 8.9 14 10 14C11.1 14 12 14.9 12 16C12 17.1 11.1 18 10 18ZM10 10C8.9 10 8 9.1 8 8C8 6.9 8.9 6 10 6C11.1 6 12 6.9 12 8C12 9.1 11.1 10 10 10Z"/>
+            </svg>
+          </div>
+          <span style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#f3f4f6'
+          }}>
+            Open Source Tracker
+          </span>
+        </div>
         
         {/* Centered title */}
         <h1 style={{ 
@@ -669,7 +935,7 @@ function App() {
         </a>
       </div>
       {/* Environment Indicator */}
-      {window.location.hostname.includes('d1j9ixntt6x51n') && (
+      {isStaging && (
         <div style={{
           backgroundColor: '#fbbf24',
           color: '#92400e',
@@ -686,24 +952,34 @@ function App() {
         </div>
       )}
 
-      {/* Repository Manager (staging only) */}
+      {/* Repository Manager */}
       <RepoManager
         activeRepo={activeRepo}
         setActiveRepo={setActiveRepo}
         repos={repos}
         setRepos={setRepos}
         onRepoChange={handleRepoChange}
+        onRepoRemove={handleRepoRemove}
         isStaging={isStaging}
       />
 
       <div className="tabs">
-        <button
-          className={activeTab === repoTabs[activeRepo] ? 'tab-active' : 'tab'}
-          onClick={() => setActiveTab(repoTabs[activeRepo])}
-          style={{ marginRight: 12 }}
-        >
-          {isStaging ? repoTabs[activeRepo] : 'Promptfoo'}
-        </button>
+        {/* Repository tabs */}
+        {repos.map((repo) => (
+          <button
+            key={repo}
+            className={activeTab === repoTabs[repo] ? 'tab-active' : 'tab'}
+            onClick={() => {
+              setActiveRepo(repo);
+              setActiveTab(repoTabs[repo]);
+              handleRepoChange(repo);
+            }}
+            style={{ marginRight: 12 }}
+          >
+            {repoTabs[repo] || repo.split('/')[1] || repo}
+          </button>
+        ))}
+        
         <button
           className={activeTab === 'realtime' ? 'tab-active' : 'tab'}
           onClick={() => setActiveTab('realtime')}
@@ -711,7 +987,7 @@ function App() {
           Real Time Statistics
         </button>
       </div>
-      {activeTab === repoTabs[activeRepo] && (
+      {(activeTab === repoTabs[activeRepo] || repos.includes(activeRepo)) && (
         <>
           {starHistory.length > 0 ? (
             <div className="card">
@@ -724,7 +1000,7 @@ function App() {
               </p>
               
               {/* Manual data collection and reset buttons (staging only) */}
-              {window.location.hostname.includes('d1j9ixntt6x51n') && (
+              {isStaging && (
                 <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
                   <button
                     onClick={triggerStarCollection}
@@ -765,6 +1041,8 @@ function App() {
                       </>
                     )}
                   </button>
+                  
+
                   
                   <button
                     onClick={resetStagingData}
@@ -808,16 +1086,18 @@ function App() {
                 </div>
               )}
 
-                <div style={{ height: '250px', width: '100%' }}>
+                <div style={{ height: '300px', width: '100%' }}>
                   <ReactApexChart
                     key={`star-chart-${chartKey}`}
                     options={{
                       chart: {
                         type: 'line',
-                        height: 250,
+                        height: 300,
                         toolbar: {
                           show: false
-                        }
+                        },
+                        offsetX: 0,
+                        offsetY: 0
                       },
                       stroke: {
                         curve: 'smooth',
@@ -827,19 +1107,24 @@ function App() {
                       xaxis: {
                         categories: starHistory.map(d => {
                           const date = new Date(d.timestamp.replace(' ', 'T'));
-                          return date.toLocaleString('en-US', {
+                          return date.toLocaleDateString('en-US', {
                             month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit', 
-                          minute: '2-digit', 
-                          hour12: true 
-                        });
+                            day: 'numeric'
+                          });
                         }),
                         labels: {
                           style: {
                             colors: '#666'
-                          }
-                        }
+                          },
+                          rotate: -45,
+                          rotateAlways: false,
+                          maxHeight: 80,
+                          hideOverlappingLabels: true,
+                          trim: false,
+                          showDuplicates: false
+                        },
+                        tickAmount: starHistory.length <= 7 ? starHistory.length : Math.min(8, Math.ceil(starHistory.length / 7)), // Day labels for ≤7 points, week labels for >7
+                        tickPlacement: 'on'
                       },
                       yaxis: {
                         labels: {
@@ -856,13 +1141,28 @@ function App() {
                         strokeDashArray: 3
                       },
                       markers: {
-                        size: 4,
+                        size: starHistory.length > 20 ? 3 : starHistory.length > 10 ? 4 : 6, // Scale down with more points
                         colors: ['#8884d8'],
                         strokeColors: '#8884d8',
-                        strokeWidth: 2
+                        strokeWidth: starHistory.length > 20 ? 1 : starHistory.length > 10 ? 1.5 : 2
                       },
                       tooltip: {
-                        theme: 'light'
+                        custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                          const dataPoint = starHistory[dataPointIndex];
+                          const date = new Date(dataPoint.timestamp.replace(' ', 'T'));
+                          const formattedDate = date.toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true
+                          });
+                          return `<div style="padding: 8px;">
+                            <div style="font-weight: bold; margin-bottom: 4px;">${formattedDate}</div>
+                            <div>Star Count: ${dataPoint.count.toLocaleString()} stars</div>
+                          </div>`;
+                        }
                       }
                     }}
                     series={[{
@@ -893,7 +1193,7 @@ function App() {
             </p>
 
             {/* Manual data collection and reset buttons for PR Velocity (staging only) */}
-            {window.location.hostname.includes('d1j9ixntt6x51n') && (
+            {isStaging && (
               <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
                 <button
                   onClick={triggerPRVelocityCollection}
@@ -1000,9 +1300,16 @@ function App() {
                         labels: {
                           style: {
                             colors: '#666'
-                          }
+                          },
+                          rotate: -45,
+                          rotateAlways: false,
+                          maxHeight: 60,
+                          hideOverlappingLabels: true,
+                          trim: false,
+                          showDuplicates: false
                         },
-                        tickAmount: prVelocityCategories.length + 1
+                        tickAmount: Math.min(8, prVelocityCategories.length), // Show max 8 labels
+                        tickPlacement: 'on'
                       },
                       yaxis: {
                         labels: {
@@ -1052,6 +1359,91 @@ function App() {
               Data is collected from the GitHub API and updates daily at 11:50 PM PST.
             </p>
 
+            {/* Manual data collection and reset buttons for Issue Health (staging only) */}
+            {isStaging && (
+              <div style={{ marginBottom: '16px', display: 'flex', gap: '12px' }}>
+                <button
+                  onClick={triggerIssueHealthCollection}
+                  disabled={isCollectingData}
+                  style={{
+                    backgroundColor: isCollectingData ? '#ccc' : '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: isCollectingData ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isCollectingData) {
+                      e.target.style.backgroundColor = '#059669';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isCollectingData) {
+                      e.target.style.backgroundColor = '#10b981';
+                    }
+                  }}
+                >
+                  {isCollectingData ? (
+                    <>
+                      <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                      Creating Data Point...
+                    </>
+                  ) : (
+                    <>
+                      ⚡ Create New Data Point
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={resetStagingData}
+                  disabled={isResettingData}
+                  style={{
+                    backgroundColor: isResettingData ? '#ccc' : '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: isResettingData ? 'not-allowed' : 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isResettingData) {
+                      e.target.style.backgroundColor = '#dc2626';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isResettingData) {
+                      e.target.style.backgroundColor = '#ef4444';
+                    }
+                  }}
+                >
+                  {isResettingData ? (
+                    <>
+                      <span style={{ animation: 'spin 1s linear infinite' }}>⏳</span>
+                      Resetting Data...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Reset to Production Data
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+
             {issueHealth.length > 0 ? (
               <div>
                 <div style={{ height: '250px', width: '100%' }}>
@@ -1075,9 +1467,16 @@ function App() {
                         labels: {
                           style: {
                             colors: '#666'
-                          }
+                          },
+                          rotate: -45,
+                          rotateAlways: false,
+                          maxHeight: 60,
+                          hideOverlappingLabels: true,
+                          trim: false,
+                          showDuplicates: false
                         },
-                        tickAmount: issueHealthCategories.length + 1
+                        tickAmount: Math.min(8, issueHealthCategories.length), // Show max 8 labels
+                        tickPlacement: 'on'
                       },
                       yaxis: {
                         labels: {
@@ -1157,8 +1556,16 @@ function App() {
                         labels: {
                           style: {
                             colors: '#666'
-                          }
-                        }
+                          },
+                          rotate: -45,
+                          rotateAlways: false,
+                          maxHeight: 60,
+                          hideOverlappingLabels: true,
+                          trim: false,
+                          showDuplicates: false
+                        },
+                        tickAmount: Math.min(8, packageDownloads.length), // Show max 8 labels
+                        tickPlacement: 'on'
                       },
                       yaxis: {
                         labels: {

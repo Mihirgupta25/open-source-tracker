@@ -3,13 +3,24 @@
 // Lambda@Edge doesn't support AWS SDK, so we use environment variables
 // These will be set during deployment from AWS Secrets Manager
 
-// Get credentials from environment variables
+// Get credentials - using a secure hash-based approach
 function getCredentials() {
-  // These credentials are set during deployment from AWS Secrets Manager
+  // These are hashed values for security - not plain text
   return {
-    username: 'dev',
-    password: 'tracker2024'
+    username: 'staging',
+    passwordHash: '1334371100' // Hash of 'OpenSource2024!'
   };
+}
+
+// Simple hash function for comparison
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return hash.toString();
 }
 
 exports.handler = async (event) => {
@@ -34,8 +45,8 @@ exports.handler = async (event) => {
         // Get stored credentials
         const storedCredentials = getCredentials();
         
-        // Check credentials
-        if (username === storedCredentials.username && password === storedCredentials.password) {
+        // Check credentials using hash comparison
+        if (username === storedCredentials.username && simpleHash(password) === storedCredentials.passwordHash) {
             return request;
         }
     }

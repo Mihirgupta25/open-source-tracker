@@ -5,15 +5,11 @@
   "dependencies": {
     "apexcharts": "^5.3.1",
     "axios": "^1.11.0",
-    "cors": "^2.8.5",
     "cra-template-pwa": "2.0.0",
-    "express": "^5.1.0",
     "react": "^19.1.0",
     "react-apexcharts": "^1.7.0",
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
-    "recharts": "^3.1.0",
-    "victory": "^37.3.6",
     "web-vitals": "^5.0.3"
   },
   "scripts": {
