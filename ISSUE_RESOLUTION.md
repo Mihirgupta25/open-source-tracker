@@ -1,4 +1,59 @@
-# Issue Resolution: MODULE_NOT_FOUND Error for better-sqlite3
+# Issue Resolution Guide
+
+## 🔐 Staging Environment Security Issue - RESOLVED
+
+### **Issue Description:**
+The staging environment credentials were exposed in public documentation, creating a security vulnerability where unauthorized users could access the staging environment.
+
+### **Root Cause:**
+- Staging environment credentials were hardcoded in public documentation
+- No proper access controls were in place for the staging environment
+- Credentials were visible in README and other public files
+
+### **Solution Implemented:**
+
+#### **1. Credential Management**
+- ✅ **Moved credentials to AWS Secrets Manager**: All staging credentials now stored securely in `staging-auth` secret
+- ✅ **Removed hardcoded credentials**: Eliminated all hardcoded passwords from public documentation
+- ✅ **Updated deployment scripts**: Modified `deploy-staging-auth.js` to use Secrets Manager
+
+#### **2. Documentation Security**
+- ✅ **Removed staging links from README**: Eliminated public access to staging environment URLs
+- ✅ **Updated documentation**: Removed all references to staging credentials in public docs
+- ✅ **Added SECURITY.md**: Created internal documentation for deployment procedures
+
+#### **3. Access Control**
+- ✅ **Enhanced authentication**: Improved staging environment login system
+- ✅ **Secure credential retrieval**: All credentials now retrieved from AWS Secrets Manager
+- ✅ **Environment isolation**: Proper separation between staging and production environments
+
+### **Current Status:**
+- **Production**: Public access maintained at `https://d14l4o1um83q49.cloudfront.net`
+- **Staging**: Password protected with credentials stored in AWS Secrets Manager
+- **Documentation**: All public docs cleaned of sensitive information
+- **Security**: Enhanced with proper credential management
+
+### **Prevention Measures:**
+1. **Never commit credentials** to public repositories
+2. **Use AWS Secrets Manager** for all sensitive data
+3. **Regular security audits** of documentation
+4. **Environment-specific access controls**
+5. **Automated credential rotation** procedures
+
+### **Deployment Process:**
+```bash
+# Update staging credentials securely
+aws secretsmanager update-secret \
+  --secret-id staging-auth \
+  --secret-string '{"username":"new_user","password":"new_password"}'
+
+# Deploy updated authentication
+node scripts/deploy-staging-auth.js
+```
+
+---
+
+## Previous Issues
 
 ## Problem
 A user encountered a `MODULE_NOT_FOUND` error when trying to start the backend:
