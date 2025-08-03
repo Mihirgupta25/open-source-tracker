@@ -27,8 +27,8 @@ const envConfigs = {
     githubTokenSecretName: 'github-token-prod',
     devCredentialsSecretName: undefined, // No staging credentials for prod
     dataCollectionSchedule: 'cron(0 */3 * * ? *)', // Every 3 hours starting at 00:00 UTC (4 PM PST)
-    useSharedDatabase: true, // Prod uses shared database initially
-    sharedDatabaseEnvironment: 'dev', // Use existing dev tables as the shared database
+    useSharedDatabase: false, // Prod uses its own database tables
+    sharedDatabaseEnvironment: undefined, // No shared database for prod
   }
 };
 
