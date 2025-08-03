@@ -9,8 +9,12 @@ const getApiBaseUrl = () => {
   if (window.location.hostname.includes('d1j9ixntt6x51n') || window.location.hostname.includes('d3k6epgbykuj3')) {
     return 'https://fw8kgqo954.execute-api.us-east-1.amazonaws.com/prod';
   }
+  // Check if we're on production environment
+  if (window.location.hostname.includes('d1ak83s2ijdnk7')) {
+    return 'https://9og5x3xfx5.execute-api.us-east-1.amazonaws.com/prod';
+  }
   // Default to production
-  return process.env.REACT_APP_API_URL || 'https://fwaonagbbh.execute-api.us-east-1.amazonaws.com/prod';
+  return process.env.REACT_APP_API_URL || 'https://9og5x3xfx5.execute-api.us-east-1.amazonaws.com/prod';
 };
 
 const API_BASE_URL = getApiBaseUrl();
