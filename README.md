@@ -4,17 +4,17 @@
 
 A modern web application that automatically collects and visualizes key metrics for open source projects, including star growth, pull request velocity, issue health, and package downloads. Built with React 19, AWS, and deployed with automated CI/CD.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-blue?style=for-the-badge)](https://d14l4o1um83q49.cloudfront.net)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-blue?style=for-the-badge)](https://d3ou2hv17g990f.cloudfront.net)
 
 ---
 
 ## 🚀 Quick Start
 
 ### Try It Now
-- **🌐 Production**: [https://d14l4o1um83q49.cloudfront.net](https://d14l4o1um83q49.cloudfront.net) (Public access)
+- **🌐 Production**: [https://d3ou2hv17g990f.cloudfront.net](https://d3ou2hv17g990f.cloudfront.net) (Public access)
 
 ### What You'll See
-- 📈 **Star Growth**: Real-time GitHub star tracking every 3 hours
+- 📈 **Star Growth**: Real-time GitHub star tracking daily at 11:50 PM PST
 - 🔄 **PR Velocity**: Daily pull request merge ratios
 - 🏥 **Issue Health**: Daily issue resolution metrics  
 - 📦 **Package Downloads**: Weekly npm download statistics
@@ -26,13 +26,14 @@ A modern web application that automatically collects and visualizes key metrics 
 ## ✨ Features
 
 ### 📊 Real-Time Analytics
-- **Automated Data Collection**: AWS Lambda functions collect data on scheduled intervals
+- **Unified Data Collection**: Single Lambda function collects all metrics for all repositories
 - **Beautiful Visualizations**: Interactive charts with hover tooltips and zoom capabilities
 - **Multi-Environment Support**: Separate staging and production environments
 - **Environment Detection**: Automatic API endpoint selection
 - **Multi-Repository Support**: Track multiple repositories with easy switching
 - **PST Timezone**: All timestamps automatically converted to Pacific Standard Time
 - **Consistent Branding**: Unified icon and styling across environments
+- **Optimized Scheduling**: Efficient EventBridge rules with minimal redundancy
 
 ### 🏗️ Modern Architecture
 - **Serverless**: AWS Lambda, DynamoDB, S3, CloudFront, API Gateway
@@ -40,6 +41,7 @@ A modern web application that automatically collects and visualizes key metrics 
 - **Secure**: AWS Secrets Manager for token management
 - **Automated**: GitHub Actions CI/CD pipeline
 - **React 19**: Latest React version with enhanced performance
+- **Unified Collector**: Single Lambda function handles all data collection types
 
 ### 🎨 User Experience
 - **Clean Design**: Card-based layout with professional aesthetics
@@ -50,6 +52,7 @@ A modern web application that automatically collects and visualizes key metrics 
 - **Repository Management**: Add, remove, and switch between repositories
 - **Custom App Icon**: Professional branding with consistent styling
 - **Auto-Correction**: Smart localStorage management for repository tabs
+- **Timestamp Consistency**: Proper date parsing for all data formats
 
 ---
 
@@ -57,10 +60,12 @@ A modern web application that automatically collects and visualizes key metrics 
 
 | Metric | Frequency | Time | Description |
 |--------|-----------|------|-------------|
-| ⭐ Star Growth | Every 3 hours | Starting 3:00 AM PST | Current GitHub star count |
+| ⭐ Star Growth | Daily | 11:50 PM PST | Current GitHub star count |
 | 🔄 PR Velocity | Daily | 11:50 PM PST | Merged vs open PR ratios |
 | 🏥 Issue Health | Daily | 11:50 PM PST | Closed vs open issue ratios |
 | 📦 Package Downloads | Weekly | Sundays 11:50 PM PST | npm download statistics |
+
+**Note**: All data collection is now unified into a single daily schedule for efficiency.
 
 ---
 
@@ -101,19 +106,20 @@ For detailed information about our system architecture, data flow, and environme
 
 ### Quick Overview
 - **Frontend**: React 19 app served via CloudFront CDN
-- **Backend**: Serverless Lambda functions with API Gateway
+- **Backend**: Unified Lambda function with API Gateway
 - **Database**: DynamoDB with separate staging/production tables
-- **Scheduling**: EventBridge for automated data collection
+- **Scheduling**: Optimized EventBridge rules (4 total rules)
 - **Security**: AWS Secrets Manager for token management
 - **Multi-Repository**: Support for tracking multiple repositories simultaneously
+- **Data Migration**: Automated scripts for staging/production data synchronization
 
 ---
 
 ## 🔧 Customization
 
 ### Adding New Metrics
-1. Create a new Lambda function in `backend/`
-2. Add EventBridge rule for scheduling
+1. Update the unified collector Lambda function in `backend/index.js`
+2. Add new data collection logic to the `triggerUnifiedCollection` function
 3. Update the frontend with new chart component
 4. Deploy via GitHub Actions
 
@@ -121,9 +127,9 @@ For detailed information about our system architecture, data flow, and environme
 Edit the CDK configuration in `infrastructure/lib/open-source-tracker-stack.ts`:
 
 ```typescript
-// Example: Change star growth to every 6 hours
-const frequentDataCollectionRule = new events.Rule(this, 'FrequentDataCollectionRule', {
-  schedule: events.Schedule.expression('cron(0 */6 * * ? *)'),
+// Example: Change daily collection time
+const dailyDataCollectionRule = new events.Rule(this, 'DailyDataCollectionRule', {
+  schedule: events.Schedule.expression('cron(50 7 * * ? *)'), // 11:50 PM PST
 });
 ```
 
@@ -194,6 +200,7 @@ aws events list-rules --name-prefix "OpenSourceTracker"
 - **Multi-repository switching**: Local storage persistence for user preferences
 - **Timezone issues**: All timestamps now automatically converted to PST
 - **Missing repository tabs**: Auto-correction logic ensures all repositories are displayed
+- **EventBridge optimization**: Reduced from 10 rules to 4 essential rules
 
 ---
 
@@ -220,17 +227,24 @@ We welcome contributions! Here's how to get started:
 
 ## 🆕 Recent Updates (August 2025)
 
+### 🔄 Unified Data Collection System
+- **Unified Collector**: Single Lambda function now handles all data collection types
+- **Optimized Scheduling**: Reduced EventBridge rules from 10 to 4 essential rules
+- **Improved Efficiency**: All repositories processed in one scheduled run
+- **Better Error Handling**: Per-repository error handling with detailed logging
+
 ### 🎯 Multi-Repository Support
 - **Added langchain repository**: Now tracking promptfoo, crewAI, and langchain repositories
 - **Repository initialization**: Easy setup of new repositories in production environment
 - **Auto-correction logic**: Smart localStorage management ensures all repository tabs are displayed
 - **Consistent data collection**: All repositories receive automated data collection
 
-### 🕐 Timezone Improvements
+### 🕐 Timezone & Timestamp Improvements
 - **PST conversion**: All timestamps automatically converted to Pacific Standard Time
 - **Consistent formatting**: Unified date/time display across all environments
 - **User-friendly timestamps**: "August 1, 2025 at 06:12:16 AM" format
 - **Database consistency**: All new data stored with PST timestamps
+- **Frontend fixes**: Proper handling of both old and new timestamp formats
 
 ### 🎨 Brand Identity
 - **Custom app icon**: Professional circular icon with consistent styling
@@ -243,11 +257,13 @@ We welcome contributions! Here's how to get started:
 - **Repository mapping**: Proper handling of crewAI repository name variations
 - **Frontend optimization**: Enhanced localStorage management and auto-correction
 - **Production deployment**: Streamlined deployment workflow with CloudFront invalidation
+- **EventBridge optimization**: Removed 6 redundant rules for cleaner management
 
 ### 🧹 Code Cleanup
 - **Removed unused scripts**: Cleaned up leftover files and unused code
 - **Optimized builds**: Reduced bundle sizes and improved performance
 - **Enhanced documentation**: Updated scripts and deployment procedures
+- **Staging environment**: Fixed GitHub token permissions and unified collector setup
 
 ---
 
@@ -302,8 +318,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **GitHub Issues**: [Create an issue](https://github.com/Mihirgupta25/open-source-tracker/issues)
 - **Documentation**: Check this README and inline code comments
-- **Live Demo**: [Production](https://d14l4o1um83q49.cloudfront.net)
+- **Live Demo**: [Production](https://d3ou2hv17g990f.cloudfront.net)
 
 ---
 
-*Last updated: August 2025 - Added langchain repository support, implemented PST timezone conversion, unified app branding across environments, enhanced localStorage auto-correction, improved data migration scripts, and optimized production deployment workflow.*
+*Last updated: August 2025 - Implemented unified data collection system, optimized EventBridge rules from 10 to 4, added langchain repository support, implemented PST timezone conversion, unified app branding across environments, enhanced localStorage auto-correction, improved data migration scripts, fixed timestamp parsing issues, and optimized production deployment workflow.*

@@ -10,7 +10,7 @@ const getApiBaseUrl = () => {
     return 'https://fw8kgqo954.execute-api.us-east-1.amazonaws.com/prod';
   }
   // Check if we're on production environment
-  if (window.location.hostname.includes('d1ak83s2ijdnk7')) {
+  if (window.location.hostname.includes('d1ak83s2ijdnk7') || window.location.hostname.includes('d14l4o1um83q49') || window.location.hostname.includes('d3ou2hv17g990f') || window.location.hostname.includes('opensourcetracker')) {
     return 'https://9og5x3xfx5.execute-api.us-east-1.amazonaws.com/prod';
   }
   // Default to production
@@ -225,31 +225,24 @@ function App() {
             
             return {
               ...d,
-              // Keep original timestamp for chart, but format for display
+              // Always use the timestamp field for parsing, as it's in a consistent format
               timestamp: d.timestamp,
-              displayTimestamp: (() => {
+              displayTimestamp: d.displayTimestamp || (() => {
                 let dateObj;
                 console.log(`📅 Processing timestamp for item ${index}:`, d.timestamp);
                 
                 if (d.timestamp.includes('T') && d.timestamp.includes('Z')) {
-                  // ISO format: "2025-07-27T01:00:11.206Z"
+                  // ISO format: "2025-08-03T11:15:14.364Z"
                   console.log(`📅 ISO format detected for item ${index}`);
                   dateObj = new Date(d.timestamp);
-                } else if (d.timestamp.includes(',') && d.timestamp.includes(' ')) {
-                  // New format: "July 25, 2025"
-                  console.log(`📅 New format detected for item ${index}`);
-                  dateObj = new Date(d.timestamp);
                 } else {
-                  // Old format: "2025-07-25 07:20:00" - treat as local time
+                  // Old format: "2025-08-01 02:19:57" - treat as local time
                   console.log(`📅 Old format detected for item ${index}`);
                   dateObj = new Date(d.timestamp.replace(' ', 'T'));
                 }
                 
                 // Convert to PST timezone for display
-                const pstOffset = -8 * 60; // PST is UTC-8
-                const pstTime = new Date(dateObj.getTime() + (pstOffset * 60 * 1000));
-                
-                const formatted = pstTime.toLocaleString('en-US', {
+                const formatted = dateObj.toLocaleString('en-US', {
                   year: 'numeric', month: 'long', day: 'numeric',
                   hour: '2-digit', minute: '2-digit', hour12: true,
                   timeZone: 'America/Los_Angeles'
@@ -1000,7 +993,7 @@ function App() {
                 This chart visualizes the growth in GitHub stars for the selected repository over time.
               </p>
               <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
-                Data is collected from the GitHub API every 3 hours.
+                Data is collected from the GitHub API daily at 11:50 PM PST.
               </p>
               
               {/* Manual data collection and reset buttons (staging only) */}
@@ -1110,7 +1103,15 @@ function App() {
                       colors: ['#8884d8'],
                       xaxis: {
                         categories: starHistory.map(d => {
-                          const date = new Date(d.timestamp.replace(' ', 'T'));
+                          // Always use the timestamp field for parsing, as it's in a consistent format
+                          let date;
+                          if (d.timestamp.includes('T') && d.timestamp.includes('Z')) {
+                            // ISO format: "2025-08-03T11:15:14.364Z"
+                            date = new Date(d.timestamp);
+                          } else {
+                            // Old format: "2025-08-01 02:19:57" - treat as local time
+                            date = new Date(d.timestamp.replace(' ', 'T'));
+                          }
                           return date.toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric'
@@ -1150,24 +1151,33 @@ function App() {
                         strokeColors: '#8884d8',
                         strokeWidth: starHistory.length > 20 ? 1 : starHistory.length > 10 ? 1.5 : 2
                       },
-                      tooltip: {
-                        custom: function({ series, seriesIndex, dataPointIndex, w }) {
-                          const dataPoint = starHistory[dataPointIndex];
-                          const date = new Date(dataPoint.timestamp.replace(' ', 'T'));
-                          const formattedDate = date.toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true
-                          });
-                          return `<div style="padding: 8px;">
-                            <div style="font-weight: bold; margin-bottom: 4px;">${formattedDate}</div>
-                            <div>Star Count: ${dataPoint.count.toLocaleString()} stars</div>
-                          </div>`;
+                                              tooltip: {
+                          custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                            const dataPoint = starHistory[dataPointIndex];
+                            // Always use the timestamp field for parsing, as it's in a consistent format
+                            let date;
+                            if (dataPoint.timestamp.includes('T') && dataPoint.timestamp.includes('Z')) {
+                              // ISO format: "2025-08-03T11:15:14.364Z"
+                              date = new Date(dataPoint.timestamp);
+                            } else {
+                              // Old format: "2025-08-01 02:19:57" - treat as local time
+                              date = new Date(dataPoint.timestamp.replace(' ', 'T'));
+                            }
+                            const formattedDate = date.toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              hour12: true,
+                              timeZone: 'America/Los_Angeles'
+                            });
+                            return `<div style="padding: 8px;">
+                              <div style="font-weight: bold; margin-bottom: 4px;">${formattedDate}</div>
+                              <div>Star Count: ${dataPoint.count.toLocaleString()} stars</div>
+                            </div>`;
+                          }
                         }
-                      }
                     }}
                     series={[{
                       name: 'Star Count',

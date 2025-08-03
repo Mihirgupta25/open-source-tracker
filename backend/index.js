@@ -74,6 +74,7 @@ async function getRepositoriesForCollection() {
       }
     };
     const result = await dynamodb.scan(params).promise();
+    console.log('🔍 getRepositoriesForCollection - Full result.Items:', JSON.stringify(result.Items, null, 2));
     return result.Items.map(item => item.repo);
   } catch (error) {
     console.error('Error getting repositories for collection:', error);
@@ -306,21 +307,34 @@ async function storeStarCount(repo, starCount) {
   const pstOffset = -8 * 60; // PST is UTC-8
   const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
   
-  // Format as "month day, year" (e.g., "July 25, 2025")
-  const timestamp = pstTime.toLocaleDateString('en-US', {
+  // Create sortable timestamp with full date-time for chronological sorting
+  const sortableTimestamp = pstTime.toISOString(); // Full ISO format for proper sorting
+  
+  // Format as "month day, year at time" (e.g., "July 25, 2025 at 03:00:20 PM") for display
+  const displayTimestamp = pstTime.toLocaleString('en-US', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZone: 'America/Los_Angeles'
   });
   
-  // Check if an entry already exists for today
+  // Check if an entry already exists for this exact timestamp (within 1 minute to avoid duplicates)
+  const oneMinuteAgo = new Date(pstTime.getTime() - 60000);
+  const oneMinuteLater = new Date(pstTime.getTime() + 60000);
+  
   const existingParams = {
     TableName: STAR_GROWTH_TABLE,
-    KeyConditionExpression: 'repo = :repo',
-    FilterExpression: 'begins_with(timestamp, :datePrefix)',
+    KeyConditionExpression: 'repo = :repo AND #ts BETWEEN :startTime AND :endTime',
+    ExpressionAttributeNames: {
+      '#ts': 'timestamp'
+    },
     ExpressionAttributeValues: {
       ':repo': repo,
-      ':datePrefix': timestamp.split(',')[0] // Get just the month and day part
+      ':startTime': oneMinuteAgo.toISOString(),
+      ':endTime': oneMinuteLater.toISOString()
     }
   };
   
@@ -328,12 +342,12 @@ async function storeStarCount(repo, starCount) {
     const existingResult = await dynamodb.query(existingParams).promise();
     
     if (existingResult.Items.length > 0) {
-      console.log(`Entry already exists for ${repo} on ${timestamp}, skipping duplicate`);
+      console.log(`Entry already exists for ${repo} on ${displayTimestamp}, skipping duplicate`);
       return {
         message: 'Entry already exists for today',
         repo: repo,
         starCount: starCount,
-        timestamp: timestamp
+        timestamp: displayTimestamp
       };
     }
     
@@ -342,19 +356,21 @@ async function storeStarCount(repo, starCount) {
       TableName: STAR_GROWTH_TABLE,
       Item: {
         repo: repo,
-        timestamp: timestamp,
+        timestamp: sortableTimestamp, // Use sortable format for database
+        displayTimestamp: displayTimestamp, // Store display format separately
         count: starCount
       }
     };
 
     await dynamodb.put(params).promise();
-    console.log(`Stored star count for ${repo}: ${starCount} at ${timestamp}`);
+    console.log(`Stored star count for ${repo}: ${starCount} at ${displayTimestamp} (sortable: ${sortableTimestamp})`);
     
     return {
       message: 'Star count stored successfully',
       repo: repo,
       starCount: starCount,
-      timestamp: timestamp
+      timestamp: displayTimestamp,
+      sortableTimestamp: sortableTimestamp
     };
   } catch (error) {
     console.error('Error storing star count:', error);
@@ -481,6 +497,72 @@ async function triggerManualStarCollection(targetRepo = REPO) {
     return {
       success: false,
       error: error.message
+    };
+  }
+}
+
+// Unified collection handler for all repositories
+async function triggerUnifiedCollection() {
+  try {
+    console.log('🔄 Starting unified collection for all repositories...');
+    
+    const githubToken = await getGitHubToken();
+    const repositories = await getRepositoriesForCollection();
+    
+    console.log(`📊 Found ${repositories.length} repositories to collect:`, repositories);
+    
+    const results = {
+      success: true,
+      message: `Unified collection completed for ${repositories.length} repositories`,
+      repositories: [],
+      errors: []
+    };
+    
+    for (const repo of repositories) {
+      try {
+        console.log(`🔍 Processing repository: ${repo}`);
+        
+        // Collect star growth data
+        const starCount = await fetchStarCount(repo, githubToken);
+        await storeStarCount(repo, starCount);
+        console.log(`⭐ Star count for ${repo}: ${starCount}`);
+        
+        // Collect PR velocity data
+        const { openCount, mergedCount } = await fetchPRData(repo, githubToken);
+        await storePRVelocity(repo, openCount, mergedCount);
+        console.log(`📈 PR velocity for ${repo}: ${openCount} open, ${mergedCount} merged`);
+        
+        // Collect issue health data
+        const { openCount: openIssues, closedCount } = await fetchIssueData(repo, githubToken);
+        await storeIssueHealth(repo, openIssues, closedCount);
+        console.log(`📋 Issue health for ${repo}: ${openIssues} open, ${closedCount} closed`);
+        
+        results.repositories.push({
+          repo: repo,
+          starCount: starCount,
+          prVelocity: { openCount, mergedCount },
+          issueHealth: { openCount: openIssues, closedCount }
+        });
+        
+      } catch (error) {
+        console.error(`❌ Error processing ${repo}:`, error);
+        results.errors.push({
+          repo: repo,
+          error: error.message,
+          fullError: error
+        });
+      }
+    }
+    
+    console.log('✅ Unified collection completed');
+    return results;
+    
+  } catch (error) {
+    console.error('❌ Error in unified collection:', error);
+    return {
+      success: false,
+      error: 'Unified collection failed: ' + error.message,
+      fullError: error
     };
   }
 }
@@ -730,6 +812,20 @@ async function batchWriteItems(tableName, items) {
 // Lambda handler
 exports.handler = async (event) => {
   console.log('Lambda function called with event:', JSON.stringify(event, null, 2));
+  
+  // Check if this is an EventBridge scheduled event
+  if (event.source === 'aws.events' && event['detail-type'] === 'Scheduled Event') {
+    console.log('🕐 EventBridge scheduled event detected, triggering unified collection...');
+    const result = await triggerUnifiedCollection();
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(result)
+    };
+  }
+  
   const { httpMethod, path, queryStringParameters } = event;
   
   // Set CORS headers
@@ -961,6 +1057,10 @@ exports.handler = async (event) => {
           error: 'Failed to initialize repository: ' + error.message
         };
       }
+
+    } else if (path === '/api/trigger-unified-collection' && httpMethod === 'POST') {
+      const unifiedResult = await triggerUnifiedCollection();
+      response = unifiedResult;
 
     } else {
       return {

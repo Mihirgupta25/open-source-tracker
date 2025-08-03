@@ -37,6 +37,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     let prVelocityTable: dynamodb.ITable;
     let issueHealthTable: dynamodb.ITable;
     let packageDownloadsTable: dynamodb.ITable;
+    let repositoriesTable: dynamodb.ITable;
 
     if (useSharedDatabase && environment !== sharedDatabaseEnvironment) {
       // Reference existing tables from the shared environment
@@ -44,12 +45,14 @@ export class OpenSourceTrackerStack extends cdk.Stack {
       prVelocityTable = dynamodb.Table.fromTableName(this, 'PRVelocityTable', `${tableSuffix}-pr-velocity`);
       issueHealthTable = dynamodb.Table.fromTableName(this, 'IssueHealthTable', `${tableSuffix}-issue-health`);
       packageDownloadsTable = dynamodb.Table.fromTableName(this, 'PackageDownloadsTable', `${tableSuffix}-package-downloads`);
+      repositoriesTable = dynamodb.Table.fromTableName(this, 'RepositoriesTable', `${tableSuffix}-repositories`);
     } else {
       // Reference existing tables for this environment
       starGrowthTable = dynamodb.Table.fromTableName(this, 'StarGrowthTable', `${tableSuffix}-star-growth`);
       prVelocityTable = dynamodb.Table.fromTableName(this, 'PRVelocityTable', `${tableSuffix}-pr-velocity`);
       issueHealthTable = dynamodb.Table.fromTableName(this, 'IssueHealthTable', `${tableSuffix}-issue-health`);
       packageDownloadsTable = dynamodb.Table.fromTableName(this, 'PackageDownloadsTable', `${tableSuffix}-package-downloads`);
+      repositoriesTable = dynamodb.Table.fromTableName(this, 'RepositoriesTable', `${tableSuffix}-repositories`);
     }
 
     // GitHub Token Secret
@@ -93,6 +96,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
         PR_VELOCITY_TABLE: prVelocityTable.tableName,
         ISSUE_HEALTH_TABLE: issueHealthTable.tableName,
         PACKAGE_DOWNLOADS_TABLE: packageDownloadsTable.tableName,
+        REPOSITORIES_TABLE: repositoriesTable.tableName,
         GITHUB_TOKEN_SECRET_NAME: githubTokenSecretName,
       },
       timeout: cdk.Duration.seconds(30),
@@ -106,82 +110,36 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     prVelocityTable.grantReadWriteData(apiFunction);
     issueHealthTable.grantReadWriteData(apiFunction);
     packageDownloadsTable.grantReadWriteData(apiFunction);
+    repositoriesTable.grantReadData(apiFunction);
     githubTokenSecret.grantRead(apiFunction);
 
-    // Data Collection Lambda Functions
-    const starGrowthCollector = new lambda.Function(this, 'StarGrowthCollector', {
+    // Unified Data Collection Lambda Function (replaces individual collectors)
+    const unifiedCollector = new lambda.Function(this, 'UnifiedCollector', {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: 'index.handler',
       code: lambda.Code.fromAsset('../backend'),
       environment: {
         ENVIRONMENT: environment,
         STAR_GROWTH_TABLE: starGrowthTable.tableName,
-        GITHUB_TOKEN_SECRET_NAME: githubTokenSecretName,
-        REPO: 'promptfoo/promptfoo',
-      },
-      timeout: cdk.Duration.seconds(60),
-      memorySize: 256,
-      layers: [sharedLayer],
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    });
-
-    const prVelocityCollector = new lambda.Function(this, 'PRVelocityCollector', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset('../backend'),
-      environment: {
-        ENVIRONMENT: environment,
         PR_VELOCITY_TABLE: prVelocityTable.tableName,
-        GITHUB_TOKEN_SECRET_NAME: githubTokenSecretName,
-        REPO: 'promptfoo/promptfoo',
-      },
-      timeout: cdk.Duration.seconds(60),
-      memorySize: 256,
-      layers: [sharedLayer],
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    });
-
-    const issueHealthCollector = new lambda.Function(this, 'IssueHealthCollector', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset('../backend'),
-      environment: {
-        ENVIRONMENT: environment,
         ISSUE_HEALTH_TABLE: issueHealthTable.tableName,
-        GITHUB_TOKEN_SECRET_NAME: githubTokenSecretName,
-        REPO: 'promptfoo/promptfoo',
-      },
-      timeout: cdk.Duration.seconds(60),
-      memorySize: 256,
-      layers: [sharedLayer],
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    });
-
-    const packageDownloadsCollector = new lambda.Function(this, 'PackageDownloadsCollector', {
-      runtime: lambda.Runtime.NODEJS_18_X,
-      handler: 'index.handler',
-      code: lambda.Code.fromAsset('../backend'),
-      environment: {
-        ENVIRONMENT: environment,
         PACKAGE_DOWNLOADS_TABLE: packageDownloadsTable.tableName,
+        REPOSITORIES_TABLE: repositoriesTable.tableName,
         GITHUB_TOKEN_SECRET_NAME: githubTokenSecretName,
-        REPO: 'promptfoo/promptfoo',
       },
-      timeout: cdk.Duration.seconds(60),
-      memorySize: 256,
+      timeout: cdk.Duration.seconds(300), // 5 minutes for unified collection
+      memorySize: 512,
       layers: [sharedLayer],
       logRetention: logs.RetentionDays.ONE_WEEK,
     });
 
-    // Grant permissions to collectors
-    starGrowthTable.grantWriteData(starGrowthCollector);
-    prVelocityTable.grantWriteData(prVelocityCollector);
-    issueHealthTable.grantWriteData(issueHealthCollector);
-    packageDownloadsTable.grantWriteData(packageDownloadsCollector);
-    githubTokenSecret.grantRead(starGrowthCollector);
-    githubTokenSecret.grantRead(prVelocityCollector);
-    githubTokenSecret.grantRead(issueHealthCollector);
-    githubTokenSecret.grantRead(packageDownloadsCollector);
+    // Grant permissions to unified collector
+    starGrowthTable.grantWriteData(unifiedCollector);
+    prVelocityTable.grantWriteData(unifiedCollector);
+    issueHealthTable.grantWriteData(unifiedCollector);
+    packageDownloadsTable.grantWriteData(unifiedCollector);
+    repositoriesTable.grantReadData(unifiedCollector);
+    githubTokenSecret.grantRead(unifiedCollector);
 
     // EventBridge Rules for scheduled data collection
     // Star growth: using dataCollectionSchedule parameter
@@ -190,27 +148,22 @@ export class OpenSourceTrackerStack extends cdk.Stack {
       description: `Frequent data collection (${dataCollectionSchedule}) for ${environment} environment`,
     });
 
-    // PR velocity and issue health: once daily at 11:50 PM PST (7:50 AM UTC next day)
+    // Daily collection: PR velocity and issue health at 11:50 PM PST (7:50 AM UTC next day)
     const dailyDataCollectionRule = new events.Rule(this, 'DailyDataCollectionRule', {
       schedule: events.Schedule.expression('cron(50 7 * * ? *)'), // 7:50 AM UTC = 11:50 PM PST
-      description: `Daily data collection (11:50 PM PST) for ${environment} environment`,
+      description: `Daily collection: Star Growth, PR Velocity & Issue Health data (11:50 PM PST) for ${environment} environment`,
     });
 
-    // Package downloads: once every 7 days starting on the 29th at 11:50 PM PST (7:50 AM UTC next day)
+    // Weekly collection: Package downloads every Sunday at 11:50 PM PST (7:50 AM UTC next day)
     const weeklyDataCollectionRule = new events.Rule(this, 'WeeklyDataCollectionRule', {
       schedule: events.Schedule.expression('cron(50 7 ? * SUN *)'), // 7:50 AM UTC = 11:50 PM PST on Sundays
-      description: `Weekly data collection (every Sunday at 11:50 PM PST) for ${environment} environment`,
+      description: `Weekly collection: Package Downloads data (every Sunday at 11:50 PM PST) for ${environment} environment`,
     });
 
-    // Add targets to the frequent rule (every 3 hours)
-    frequentDataCollectionRule.addTarget(new targets.LambdaFunction(starGrowthCollector));
-
-    // Add targets to the daily rule (once per day)
-    dailyDataCollectionRule.addTarget(new targets.LambdaFunction(prVelocityCollector));
-    dailyDataCollectionRule.addTarget(new targets.LambdaFunction(issueHealthCollector));
-
-    // Add targets to the weekly rule (once per week)
-    weeklyDataCollectionRule.addTarget(new targets.LambdaFunction(packageDownloadsCollector));
+    // Add targets to the rules
+    frequentDataCollectionRule.addTarget(new targets.LambdaFunction(unifiedCollector));
+    dailyDataCollectionRule.addTarget(new targets.LambdaFunction(unifiedCollector));
+    weeklyDataCollectionRule.addTarget(new targets.LambdaFunction(unifiedCollector));
 
     // API Gateway
     const api = new apigateway.RestApi(this, 'OpenSourceTrackerAPI', {
