@@ -1,153 +1,118 @@
 const AWS = require('aws-sdk');
+const fs = require('fs');
 
 // Configure AWS
 AWS.config.update({ region: 'us-east-1' });
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 
-// Table mappings with their sort key names
-const tableMappings = {
-  'prod-star-growth': { staging: 'staging-star-growth', sortKey: 'timestamp' },
-  'prod-pr-velocity': { staging: 'staging-pr-velocity', sortKey: 'date' },
-  'prod-issue-health': { staging: 'staging-issue-health', sortKey: 'date' },
-  'prod-package-downloads': { staging: 'staging-package-downloads', sortKey: 'week_start' }
-};
-
-// Repositories to copy
-const repositories = ['promptfoo/promptfoo', 'crewAIInc/crewAI', 'langchain-ai/langchain'];
-
-async function clearStagingTable(tableName, sortKeyName) {
-  console.log(`Clearing staging table: ${tableName}`);
+// Function to convert DynamoDB low-level format to plain objects
+function convertDynamoDBItem(item) {
+  const converted = {};
   
-  try {
-    // Scan all items in the staging table
-    const scanParams = {
-      TableName: tableName
-    };
-    
-    const scanResult = await dynamodb.scan(scanParams).promise();
-    
-    if (scanResult.Items.length === 0) {
-      console.log(`  No items to delete in ${tableName}`);
-      return 0;
+  for (const [key, value] of Object.entries(item)) {
+    if (value.S) {
+      converted[key] = value.S;
+    } else if (value.N) {
+      converted[key] = parseFloat(value.N);
+    } else if (value.BOOL !== undefined) {
+      converted[key] = value.BOOL;
+    } else if (value.NULL) {
+      converted[key] = null;
+    } else if (value.L) {
+      converted[key] = value.L.map(convertDynamoDBItem);
+    } else if (value.M) {
+      converted[key] = convertDynamoDBItem(value.M);
+    } else {
+      converted[key] = value;
     }
-    
-    // Delete items in batches of 25 (DynamoDB limit)
-    const deletePromises = [];
-    for (let i = 0; i < scanResult.Items.length; i += 25) {
-      const batch = scanResult.Items.slice(i, i + 25);
-      const deleteParams = {
-        RequestItems: {
-          [tableName]: batch.map(item => {
-            const deleteRequest = {
-              DeleteRequest: {
-                Key: {
-                  repo: item.repo
-                }
-              }
-            };
-            
-            // Add sort key if it exists
-            if (item[sortKeyName]) {
-              deleteRequest.DeleteRequest.Key[sortKeyName] = item[sortKeyName];
-            }
-            
-            return deleteRequest;
-          })
-        }
-      };
-      deletePromises.push(dynamodb.batchWrite(deleteParams).promise());
-    }
-    
-    await Promise.all(deletePromises);
-    console.log(`  Deleted ${scanResult.Items.length} items from ${tableName}`);
-    return scanResult.Items.length;
-  } catch (error) {
-    console.error(`  Error clearing ${tableName}:`, error);
-    throw error;
   }
+  
+  return converted;
 }
 
-async function copyFromProduction(prodTable, stagingTable, repo, sortKeyName) {
-  console.log(`Copying data for ${repo} from ${prodTable} to ${stagingTable}`);
-  
+async function copyTableData(sourceTable, targetTable, dataFile) {
   try {
-    // Query production table for this repository
-    const queryParams = {
-      TableName: prodTable,
-      KeyConditionExpression: 'repo = :repo',
-      ExpressionAttributeValues: {
-        ':repo': repo
-      }
-    };
+    console.log(`📊 Copying data from ${sourceTable} to ${targetTable}...`);
     
-    const result = await dynamodb.query(queryParams).promise();
+    // Read the exported data
+    const rawData = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+    console.log(`📊 Found ${rawData.length} items to copy`);
     
-    if (result.Items.length === 0) {
-      console.log(`  No data found for ${repo} in ${prodTable}`);
-      return 0;
+    if (rawData.length === 0) {
+      console.log(`⚠️ No data found in ${sourceTable}`);
+      return;
     }
     
-    // Write items to staging table in batches
-    const writePromises = [];
-    for (let i = 0; i < result.Items.length; i += 25) {
-      const batch = result.Items.slice(i, i + 25);
-      const writeParams = {
+    // Convert DynamoDB low-level format to plain objects
+    const data = rawData.map(convertDynamoDBItem);
+    console.log(`📊 Converted ${data.length} items to plain format`);
+    
+    // Process items in batches of 25 (DynamoDB batch limit)
+    const batchSize = 25;
+    for (let i = 0; i < data.length; i += batchSize) {
+      const batch = data.slice(i, i + batchSize);
+      
+      const writeRequests = batch.map(item => ({
+        PutRequest: {
+          Item: item
+        }
+      }));
+      
+      const params = {
         RequestItems: {
-          [stagingTable]: batch.map(item => ({
-            PutRequest: {
-              Item: item
-            }
-          }))
+          [targetTable]: writeRequests
         }
       };
-      writePromises.push(dynamodb.batchWrite(writeParams).promise());
+      
+      try {
+        await dynamodb.batchWrite(params).promise();
+        console.log(`✅ Copied batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(data.length / batchSize)} (${batch.length} items)`);
+      } catch (error) {
+        console.error(`❌ Error copying batch ${Math.floor(i / batchSize) + 1}:`, error);
+        throw error;
+      }
     }
     
-    await Promise.all(writePromises);
-    console.log(`  Copied ${result.Items.length} items for ${repo} from ${prodTable} to ${stagingTable}`);
-    return result.Items.length;
+    console.log(`✅ Successfully copied all data from ${sourceTable} to ${targetTable}`);
   } catch (error) {
-    console.error(`  Error copying data for ${repo} from ${prodTable}:`, error);
+    console.error(`❌ Error copying data from ${sourceTable} to ${targetTable}:`, error);
     throw error;
   }
 }
 
 async function main() {
-  console.log('🚀 Starting production to staging data copy...\n');
-  
-  let totalCleared = 0;
-  let totalCopied = 0;
-  
   try {
-    // Step 1: Clear all staging tables
-    console.log('📋 Step 1: Clearing staging tables...');
-    for (const [prodTable, tableInfo] of Object.entries(tableMappings)) {
-      const cleared = await clearStagingTable(tableInfo.staging, tableInfo.sortKey);
-      totalCleared += cleared;
-    }
-    console.log(`✅ Cleared ${totalCleared} total items from staging tables\n`);
+    console.log('🚀 Starting data copy from production to staging...');
     
-    // Step 2: Copy data from production to staging
-    console.log('📋 Step 2: Copying data from production to staging...');
-    for (const [prodTable, tableInfo] of Object.entries(tableMappings)) {
-      for (const repo of repositories) {
-        const copied = await copyFromProduction(prodTable, tableInfo.staging, repo, tableInfo.sortKey);
-        totalCopied += copied;
+    // Copy each table
+    await copyTableData('prod-star-growth', 'staging-star-growth', 'prod-star-growth-data.json');
+    await copyTableData('prod-pr-velocity', 'staging-pr-velocity', 'prod-pr-velocity-data.json');
+    await copyTableData('prod-issue-health', 'staging-issue-health', 'prod-issue-health-data.json');
+    await copyTableData('prod-package-downloads', 'staging-package-downloads', 'prod-package-downloads-data.json');
+    await copyTableData('prod-repositories', 'staging-repositories', 'prod-repositories-data.json');
+    
+    console.log('🎉 All data successfully copied from production to staging!');
+    
+    // Clean up temporary files
+    const files = [
+      'prod-star-growth-data.json',
+      'prod-pr-velocity-data.json', 
+      'prod-issue-health-data.json',
+      'prod-package-downloads-data.json',
+      'prod-repositories-data.json'
+    ];
+    
+    files.forEach(file => {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+        console.log(`🗑️ Cleaned up ${file}`);
       }
-    }
-    console.log(`✅ Copied ${totalCopied} total items from production to staging\n`);
-    
-    console.log('🎉 Data copy completed successfully!');
-    console.log(`📊 Summary:`);
-    console.log(`   - Items cleared from staging: ${totalCleared}`);
-    console.log(`   - Items copied from production: ${totalCopied}`);
-    console.log(`   - Repositories processed: ${repositories.join(', ')}`);
+    });
     
   } catch (error) {
-    console.error('❌ Error during data copy:', error);
+    console.error('❌ Error in main:', error);
     process.exit(1);
   }
 }
 
-// Run the script
 main(); 

@@ -1,0 +1,149 @@
+[
+  {
+    "timestamp": "2025-08-01T20:27:19.000Z",
+    "displayTimestamp": "August 1, 2025 at 01:27 PM",
+    "count": 1,
+    "action": "started",
+    "user": "christosnon"
+  },
+  {
+    "timestamp": "2025-08-01T22:25:36.000Z",
+    "displayTimestamp": "August 1, 2025 at 03:25 PM",
+    "count": 2,
+    "action": "started",
+    "user": "nathanlane"
+  },
+  {
+    "timestamp": "2025-08-02T05:36:44.000Z",
+    "displayTimestamp": "August 1, 2025 at 10:36 PM",
+    "count": 3,
+    "action": "started",
+    "user": "ShantanuJoshi"
+  },
+  {
+    "timestamp": "2025-08-02T07:42:48.000Z",
+    "displayTimestamp": "August 2, 2025 at 12:42 AM",
+    "count": 4,
+    "action": "started",
+    "user": "Kiranpatil02"
+  },
+  {
+    "timestamp": "2025-08-02T11:22:22.000Z",
+    "displayTimestamp": "August 2, 2025 at 04:22 AM",
+    "count": 5,
+    "action": "started",
+    "user": "payalnaik97"
+  },
+  {
+    "timestamp": "2025-08-02T11:56:03.000Z",
+    "displayTimestamp": "August 2, 2025 at 04:56 AM",
+    "count": 6,
+    "action": "started",
+    "user": "Jeffallan"
+  },
+  {
+    "timestamp": "2025-08-02T17:01:41.000Z",
+    "displayTimestamp": "August 2, 2025 at 10:01 AM",
+    "count": 7,
+    "action": "started",
+    "user": "gelim"
+  },
+  {
+    "timestamp": "2025-08-03T00:01:52.000Z",
+    "displayTimestamp": "August 2, 2025 at 05:01 PM",
+    "count": 8,
+    "action": "started",
+    "user": "chuyouchia"
+  },
+  {
+    "timestamp": "2025-08-03T04:12:07.000Z",
+    "displayTimestamp": "August 2, 2025 at 09:12 PM",
+    "count": 9,
+    "action": "started",
+    "user": "wyv3rnnn"
+  },
+  {
+    "timestamp": "2025-08-03T12:27:47.000Z",
+    "displayTimestamp": "August 3, 2025 at 05:27 AM",
+    "count": 10,
+    "action": "started",
+    "user": "ftufkc"
+  },
+  {
+    "timestamp": "2025-08-03T14:53:07.000Z",
+    "displayTimestamp": "August 3, 2025 at 07:53 AM",
+    "count": 11,
+    "action": "started",
+    "user": "evanfang0054"
+  },
+  {
+    "timestamp": "2025-08-03T19:08:46.000Z",
+    "displayTimestamp": "August 3, 2025 at 12:08 PM",
+    "count": 12,
+    "action": "started",
+    "user": "BrianP8701"
+  },
+  {
+    "timestamp": "2025-08-03T21:14:47.000Z",
+    "displayTimestamp": "August 3, 2025 at 02:14 PM",
+    "count": 13,
+    "action": "started",
+    "user": "q121q"
+  },
+  {
+    "timestamp": "2025-08-04T00:51:33.000Z",
+    "displayTimestamp": "August 3, 2025 at 05:51 PM",
+    "count": 14,
+    "action": "started",
+    "user": "RickProductivity"
+  },
+  {
+    "timestamp": "2025-08-04T01:31:59.000Z",
+    "displayTimestamp": "August 3, 2025 at 06:31 PM",
+    "count": 15,
+    "action": "started",
+    "user": "khanhney"
+  },
+  {
+    "timestamp": "2025-08-04T04:20:11.000Z",
+    "displayTimestamp": "August 3, 2025 at 09:20 PM",
+    "count": 16,
+    "action": "started",
+    "user": "LanZhenFeng1"
+  },
+  {
+    "timestamp": "2025-08-04T05:13:30.000Z",
+    "displayTimestamp": "August 3, 2025 at 10:13 PM",
+    "count": 17,
+    "action": "started",
+    "user": "ryuukaa"
+  },
+  {
+    "timestamp": "2025-08-04T05:53:05.000Z",
+    "displayTimestamp": "August 3, 2025 at 10:53 PM",
+    "count": 18,
+    "action": "started",
+    "user": "godfather-ace"
+  },
+  {
+    "timestamp": "2025-08-04T08:26:11.000Z",
+    "displayTimestamp": "August 4, 2025 at 01:26 AM",
+    "count": 19,
+    "action": "started",
+    "user": "raindue9"
+  },
+  {
+    "timestamp": "2025-08-04T10:49:19.000Z",
+    "displayTimestamp": "August 4, 2025 at 03:49 AM",
+    "count": 20,
+    "action": "started",
+    "user": "xtwigs"
+  },
+  {
+    "timestamp": "2025-08-04T20:12:22.923Z",
+    "displayTimestamp": "August 4, 2025 at 01:12 PM",
+    "count": 7852,
+    "action": "current",
+    "user": "current"
+  }
+]

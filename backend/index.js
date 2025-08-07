@@ -449,9 +449,9 @@ async function triggerManualStarCollection(targetRepo = REPO) {
     let githubRepo = targetRepo;
     let dbRepo = targetRepo;
     
-    if (targetRepo === 'crewAI/crewAI') {
+    if (targetRepo === 'crewAI/crewAI' || targetRepo === 'crewAIInc/crewAI') {
       githubRepo = 'crewAIInc/crewAI'; // Use the correct GitHub repository
-      dbRepo = 'crewAI/crewAI'; // Keep the original name for database consistency
+      dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
     }
     
     // Fetch current star count from GitHub
@@ -571,8 +571,8 @@ async function triggerUnifiedCollection() {
 async function queryStarHistory(repo) {
   // Handle crewAI repository mapping
   let dbRepo = repo;
-  if (repo === 'crewAI/crewAI') {
-    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
+  if (repo === 'crewAI/crewAI' || repo === 'crewAIInc/crewAI') {
+    dbRepo = 'crewAllnc/crewAI'; // Use the actual database repository name (with typo)
   }
   
   const params = {
@@ -591,8 +591,8 @@ async function queryStarHistory(repo) {
 async function queryPRVelocity(repo) {
   // Handle crewAI repository mapping
   let dbRepo = repo;
-  if (repo === 'crewAI/crewAI') {
-    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
+  if (repo === 'crewAI/crewAI' || repo === 'crewAIInc/crewAI') {
+    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name for PR velocity
   }
   
   const params = {
@@ -611,8 +611,8 @@ async function queryPRVelocity(repo) {
 async function queryIssueHealth(repo) {
   // Handle crewAI repository mapping
   let dbRepo = repo;
-  if (repo === 'crewAI/crewAI') {
-    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
+  if (repo === 'crewAI/crewAI' || repo === 'crewAIInc/crewAI') {
+    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name for issue health
   }
   
   const params = {
@@ -631,8 +631,8 @@ async function queryIssueHealth(repo) {
 async function queryPackageDownloads(repo) {
   // Handle crewAI repository mapping
   let dbRepo = repo;
-  if (repo === 'crewAI/crewAI') {
-    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name
+  if (repo === 'crewAI/crewAI' || repo === 'crewAIInc/crewAI') {
+    dbRepo = 'crewAIInc/crewAI'; // Use the correct database repository name for package downloads
   }
   
   const params = {

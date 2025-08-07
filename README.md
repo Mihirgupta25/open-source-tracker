@@ -67,6 +67,16 @@ A modern web application that automatically collects and visualizes key metrics 
 
 **Note**: All data collection is now unified into a single daily schedule for efficiency.
 
+## 🔄 **EventBridge Rules Status**
+
+✅ **All EventBridge rules are now active** for both staging and production environments:
+
+- **Frequent Data Collection**: Star growth data collected every 6 hours
+- **Daily Collection**: PR velocity and issue health data collected daily at 11:50 PM PST
+- **Weekly Collection**: Package downloads collected every Sunday at 11:50 PM PST
+
+The rules were temporarily disabled during data migration but have been successfully re-enabled.
+
 ---
 
 ## 🛠️ Development Setup
@@ -96,6 +106,67 @@ npm run cdk:staging
 
 # Deploy to production  
 npm run cdk:prod
+```
+
+### 📁 Scripts Directory
+The project includes a comprehensive collection of utility scripts in the `scripts/` directory:
+
+- **🔧 Data Management**: Scripts for managing DynamoDB data, adding historical data, and copying between environments
+- **🔍 GitHub API**: Scripts for fetching star history, PR data, and issue metrics from GitHub
+- **📊 BigQuery**: Scripts for large-scale data analysis using Google BigQuery
+- **🚀 Deployment**: Scripts for managing infrastructure and deployments
+- **🔍 Debug**: Scripts for debugging and analyzing data
+
+See [scripts/README.md](scripts/README.md) for a complete list and usage examples.
+
+```bash
+# Example: Add historical data to staging
+node scripts/add-crewai-historical-data.js
+
+# Example: Check data in tables
+node scripts/check-crewai-data.js
+
+# Example: Fetch historical stars
+node scripts/fetch-historical-stars.js
+```
+
+### 📚 Documentation Directory
+Comprehensive documentation is organized in the `docs/` directory:
+
+- **🚀 Getting Started**: Quick start guides and development workflow
+- **🏗️ Architecture & Deployment**: System design and deployment guides
+- **🔧 Development & Setup**: Environment setup and configuration guides
+- **🔍 Analysis & Research**: Data analysis and troubleshooting guides
+- **🔒 Security & Compliance**: Security guidelines and best practices
+
+See [docs/README.md](docs/README.md) for a complete documentation overview.
+
+```bash
+# View architecture documentation
+cat docs/ARCHITECTURE.md
+
+# View deployment guide
+cat docs/AWS_DEPLOYMENT.md
+
+# View development workflow
+cat docs/DEVELOPMENT_WORKFLOW.md
+```
+
+### 📊 Data Directory
+Data files and exports are organized in the `data/` directory:
+
+- **Historical Data**: Repository star timeline and historical data
+- **API Responses**: Example API response data for development
+- **Analysis Exports**: Data exports from various analyses
+
+See [data/README.md](data/README.md) for data file descriptions.
+
+```bash
+# View historical data
+cat data/promptfoo-star-timeline.json
+
+# View API response example
+cat data/response.json
 ```
 
 ---

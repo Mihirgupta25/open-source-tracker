@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "@google-cloud/bigquery": "^8.1.1",
     "archiver": "^7.0.1",
-    "aws-sdk": "^2.1692.0"
+    "aws-sdk": "^2.1692.0",
+    "axios": "^1.11.0"
   }
 }

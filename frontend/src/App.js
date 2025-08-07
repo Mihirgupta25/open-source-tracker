@@ -845,92 +845,6 @@ function App() {
 
   return (
     <div className="App">
-      {/* Header with custom icon and GitHub Octocat */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '16px 0',
-        borderBottom: '1px solid #e5e7eb',
-        marginBottom: '24px',
-        position: 'relative'
-      }}>
-        {/* Custom app icon on the left */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            backgroundColor: '#f3f4f6',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid #e5e7eb'
-          }}>
-            <svg 
-              width="20" 
-              height="20" 
-              viewBox="0 0 20 20" 
-              fill="#6b7280"
-            >
-              <path d="M10 2C8.9 2 8 2.9 8 4C8 5.1 8.9 6 10 6C11.1 6 12 5.1 12 4C12 2.9 11.1 2 10 2ZM10 18C8.9 18 8 17.1 8 16C8 14.9 8.9 14 10 14C11.1 14 12 14.9 12 16C12 17.1 11.1 18 10 18ZM10 10C8.9 10 8 9.1 8 8C8 6.9 8.9 6 10 6C11.1 6 12 6.9 12 8C12 9.1 11.1 10 10 10Z"/>
-            </svg>
-          </div>
-          <span style={{
-            fontSize: '18px',
-            fontWeight: '600',
-            color: '#f3f4f6'
-          }}>
-            Open Source Tracker
-          </span>
-        </div>
-        
-        {/* Centered title */}
-        <h1 style={{ 
-          margin: 0, 
-          position: 'absolute',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          textAlign: 'center'
-        }}>
-          Open Source Growth Tracker
-        </h1>
-        
-        {/* GitHub icon on the right */}
-        <a 
-          href="https://github.com/Mihirgupta25/open-source-tracker" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            color: '#000',
-            textDecoration: 'none',
-            fontSize: '24px',
-            transition: 'opacity 0.2s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.opacity = '0.7';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.opacity = '1';
-          }}
-        >
-          <svg 
-            width="24" 
-            height="24" 
-            viewBox="0 0 16 16" 
-            fill="currentColor"
-            style={{ display: 'block' }}
-          >
-            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
-          </svg>
-        </a>
-      </div>
       {/* Environment Indicator */}
       {isStaging && (
         <div style={{
@@ -1091,10 +1005,23 @@ function App() {
                         type: 'line',
                         height: 300,
                         toolbar: {
-                          show: false
+                          show: true,
+                          tools: {
+                            download: false,
+                            selection: true,
+                            zoom: true,
+                            zoomin: true,
+                            zoomout: true,
+                            pan: true,
+                            reset: true
+                          }
                         },
                         offsetX: 0,
-                        offsetY: 0
+                        offsetY: 0,
+                        zoom: {
+                          enabled: true,
+                          type: 'x'
+                        }
                       },
                       stroke: {
                         curve: 'smooth',
@@ -1129,7 +1056,10 @@ function App() {
                           showDuplicates: false
                         },
                         tickAmount: starHistory.length <= 7 ? starHistory.length : Math.min(8, Math.ceil(starHistory.length / 7)), // Day labels for ≤7 points, week labels for >7
-                        tickPlacement: 'on'
+                        tickPlacement: 'on',
+                        range: undefined, // Show full range by default
+                        min: undefined, // No minimum limit
+                        max: undefined  // No maximum limit
                       },
                       yaxis: {
                         labels: {
