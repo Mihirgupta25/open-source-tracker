@@ -28,13 +28,20 @@ function App() {
   const [activeTab, setActiveTab] = useState(() => {
     // Load active tab from localStorage if available, otherwise use default
     const savedActiveTab = localStorage.getItem('active-tab');
-    return savedActiveTab || 'promptfoo';
+    const defaultTab = savedActiveTab || 'about';
+    
+    // If trying to access realtime tab, redirect to about tab (removed from both environments)
+    if (defaultTab === 'realtime') {
+      return 'about';
+    }
+    
+    return defaultTab;
   });
   
   const [repoTabs, setRepoTabs] = useState(() => {
     // Load repo tabs from localStorage if available, otherwise use default
     const savedRepoTabs = localStorage.getItem('repo-tabs');
-    const defaultRepoTabs = { 'promptfoo/promptfoo': 'promptfoo', 'crewAIInc/crewAI': 'crewAI', 'langchain-ai/langchain': 'langchain' };
+    const defaultRepoTabs = { 'promptfoo/promptfoo': 'Promptfoo', 'crewAIInc/crewAI': 'CrewAI', 'langchain-ai/langchain': 'LangChain' };
     
     if (savedRepoTabs) {
       const parsedRepoTabs = JSON.parse(savedRepoTabs);
@@ -273,7 +280,7 @@ function App() {
   }, [activeRepo]);
 
   useEffect(() => {
-            if (activeTab === repoTabs[activeRepo] || activeTab === 'promptfoo') {
+            if (activeTab === repoTabs[activeRepo] || activeTab === 'Promptfoo') {
       async function fetchPrVelocity() {
         try {
           const res = await fetch(`${API_BASE_URL}/api/pr-velocity?repo=${activeRepo}`);
@@ -863,6 +870,56 @@ function App() {
         </div>
       )}
 
+      {/* Octocat Header - Production Only */}
+      {!isStaging && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          marginBottom: '20px',
+          paddingLeft: '20px'
+        }}>
+          <a 
+            href="https://github.com/Mihirgupta25/open-source-tracker" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ textDecoration: 'none' }}
+          >
+            <img
+              src="https://yt3.googleusercontent.com/PKRBxhCiGa8Y0vPmHa1E2cdjpLhUq2Pl-gESwP7kk2plGgxLdsbjyTd9VjcJwBMiY0HQ8bvx5Q=s900-c-k-c0x00ffffff-no-rj"
+              alt="GitHub Octocat"
+              width="48"
+              height="48"
+              style={{
+                marginRight: '16px',
+                borderRadius: '50%',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                border: '2px solid #333333',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'scale(1.05)';
+                e.target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'scale(1)';
+                e.target.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)';
+              }}
+            />
+          </a>
+          <h1 style={{
+            fontSize: '2.2rem',
+            fontWeight: '700',
+            color: '#3b3b5c',
+            margin: '0',
+            letterSpacing: '-0.5px'
+          }}>
+            Open Source Tracker
+          </h1>
+        </div>
+      )}
+
       {/* Repository Manager */}
       <RepoManager
         activeRepo={activeRepo}
@@ -875,6 +932,15 @@ function App() {
       />
 
       <div className="tabs">
+        {/* About tab */}
+        <button
+          className={activeTab === 'about' ? 'tab-active' : 'tab'}
+          onClick={() => setActiveTab('about')}
+          style={{ marginRight: 12 }}
+        >
+          About
+        </button>
+        
         {/* Repository tabs */}
         {repos.map((repo) => (
           <button
@@ -887,18 +953,40 @@ function App() {
             }}
             style={{ marginRight: 12 }}
           >
-            {repoTabs[repo] || repo.split('/')[1] || repo}
+            {repoTabs[repo] === 'Promptfoo' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {repoTabs[repo]}
+                <img 
+                  src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0DhPUWLGfVwn8-WDrS1Ef96p9tsuZZxU7Ng&s" 
+                  alt="Promptfoo logo" 
+                  style={{ width: '16px', height: '16px' }}
+                />
+              </div>
+            ) : repoTabs[repo] === 'CrewAI' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {repoTabs[repo]}
+                <img 
+                  src="https://pbs.twimg.com/profile_images/1770816346906849281/t72FgUel_400x400.jpg" 
+                  alt="CrewAI logo" 
+                  style={{ width: '16px', height: '16px' }}
+                />
+              </div>
+            ) : repoTabs[repo] === 'LangChain' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {repoTabs[repo]}
+                <img 
+                  src="https://images.seeklogo.com/logo-png/61/1/langchain-icon-logo-png_seeklogo-611655.png" 
+                  alt="LangChain logo" 
+                  style={{ width: '16px', height: '16px' }}
+                />
+              </div>
+            ) : (
+              repoTabs[repo] || repo.split('/')[1] || repo
+            )}
           </button>
         ))}
-        
-        <button
-          className={activeTab === 'realtime' ? 'tab-active' : 'tab'}
-          onClick={() => setActiveTab('realtime')}
-        >
-          Real Time Statistics
-        </button>
       </div>
-      {(activeTab === repoTabs[activeRepo] || repos.includes(activeRepo)) && (
+      {(activeTab === repoTabs[activeRepo] || repos.includes(activeRepo)) && activeTab !== 'about' && (
         <>
           {starHistory.length > 0 ? (
             <div className="card">
@@ -907,7 +995,7 @@ function App() {
                 This chart visualizes the growth in GitHub stars for the selected repository over time.
               </p>
               <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
-                Data is collected from the GitHub API daily at 11:50 PM PST.
+                Data is collected daily from the GitHub API.
               </p>
               
               {/* Manual data collection and reset buttons (staging only) */}
@@ -1081,33 +1169,33 @@ function App() {
                         strokeColors: '#8884d8',
                         strokeWidth: starHistory.length > 20 ? 1 : starHistory.length > 10 ? 1.5 : 2
                       },
-                                              tooltip: {
-                          custom: function({ series, seriesIndex, dataPointIndex, w }) {
-                            const dataPoint = starHistory[dataPointIndex];
-                            // Always use the timestamp field for parsing, as it's in a consistent format
-                            let date;
-                            if (dataPoint.timestamp.includes('T') && dataPoint.timestamp.includes('Z')) {
-                              // ISO format: "2025-08-03T11:15:14.364Z"
-                              date = new Date(dataPoint.timestamp);
-                            } else {
-                              // Old format: "2025-08-01 02:19:57" - treat as local time
-                              date = new Date(dataPoint.timestamp.replace(' ', 'T'));
-                            }
-                            const formattedDate = date.toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              hour12: true,
-                              timeZone: 'America/Los_Angeles'
-                            });
-                            return `<div style="padding: 8px;">
-                              <div style="font-weight: bold; margin-bottom: 4px;">${formattedDate}</div>
-                              <div>Star Count: ${dataPoint.count.toLocaleString()} stars</div>
-                            </div>`;
+                      tooltip: {
+                        custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                          const dataPoint = starHistory[dataPointIndex];
+                          // Always use the timestamp field for parsing, as it's in a consistent format
+                          let date;
+                          if (dataPoint.timestamp.includes('T') && dataPoint.timestamp.includes('Z')) {
+                            // ISO format: "2025-08-03T11:15:14.364Z"
+                            date = new Date(dataPoint.timestamp);
+                          } else {
+                            // Old format: "2025-08-01 02:19:57" - treat as local time
+                            date = new Date(dataPoint.timestamp.replace(' ', 'T'));
                           }
+                          const formattedDate = date.toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                            timeZone: 'America/Los_Angeles'
+                          });
+                          return `<div style="padding: 8px;">
+                            <div style="font-weight: bold; margin-bottom: 4px;">${formattedDate}</div>
+                            <div>Star Count: ${dataPoint.count.toLocaleString()} stars</div>
+                          </div>`;
                         }
+                      }
                     }}
                     series={[{
                       name: 'Star Count',
@@ -1133,7 +1221,7 @@ function App() {
               This chart visualizes the ratio of merged to open pull requests for the selected repository over time.
             </p>
             <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
-              Data is collected from the GitHub API and updates daily at 11:50 PM PST.
+              Data is collected daily from the GitHub API.
             </p>
 
             {/* Manual data collection and reset buttons for PR Velocity (staging only) */}
@@ -1300,7 +1388,7 @@ function App() {
               This chart visualizes the ratio of closed to open issues for the selected repository over time.
             </p>
             <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: 12, textAlign: 'left', fontStyle: 'italic' }}>
-              Data is collected from the GitHub API and updates daily at 11:50 PM PST.
+              Data is collected daily from the GitHub API.
             </p>
 
             {/* Manual data collection and reset buttons for Issue Health (staging only) */}
@@ -1550,6 +1638,46 @@ function App() {
             )}
           </div>
         </>
+      )}
+      {activeTab === 'about' && (
+        <div className="card">
+            <h2>About</h2>
+          <div style={{ fontSize: '1rem', color: '#3b3b5c', textAlign: 'left', lineHeight: '1.7' }}>
+            <p style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50', marginBottom: '20px', textAlign: 'center' }}>
+              🚀 <strong>My Artifact:</strong> Open-Source Startup Tracker
+            </p>
+            
+            <p style={{ marginBottom: '18px', fontSize: '1rem' }}>
+              This website <strong>automatically tracks the open-source traction of startups</strong>, measuring how much a company's public software projects are being used in the real world.
+            </p>
+            
+            <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #e9ecef' }}>
+              <h3 style={{ color: '#495057', fontSize: '1rem', fontWeight: '600', marginBottom: '12px', marginTop: '0' }}>
+                🔧 Technical Architecture
+              </h3>
+              <p style={{ marginBottom: '8px', fontSize: '0.95rem' }}>
+                • <strong>Data Collection:</strong> Connects to GitHub's API to gather real-time metrics<br/>
+                • <strong>Cloud Infrastructure:</strong> Secure storage using Amazon Web Services<br/>
+                • <strong>Visualization:</strong> Automated dashboard with interactive charts and graphs
+              </p>
+            </div>
+            
+            <div style={{ backgroundColor: '#e8f5e8', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #c3e6c3' }}>
+              <h3 style={{ color: '#2d5a2d', fontSize: '1rem', fontWeight: '600', marginBottom: '12px', marginTop: '0' }}>
+                💡 Interactive Features
+              </h3>
+              <p style={{ marginBottom: '8px', fontSize: '0.95rem' }}>
+                • <strong>Zoom & Hover:</strong> Try zooming in or hovering over data points!<br/>
+                • <strong>Multi-Company Analysis:</strong> Each tab shows different company data<br/>
+                • <strong>Real-Time Trends:</strong> See how products are performing over time
+              </p>
+            </div>
+            
+            <p style={{ textAlign: 'center', fontSize: '0.95rem', fontStyle: 'italic', color: '#6c757d', marginBottom: '0' }}>
+              🔗 <strong>Explore the code:</strong> Click the GitHub logo (top-left) to view the complete source code I developed for this project
+            </p>
+          </div>
+        </div>
       )}
       {activeTab === 'realtime' && (
         <div className="card">

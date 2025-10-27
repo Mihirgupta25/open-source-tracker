@@ -71,11 +71,10 @@ A modern web application that automatically collects and visualizes key metrics 
 
 ✅ **All EventBridge rules are now active** for both staging and production environments:
 
-- **Frequent Data Collection**: Star growth data collected every 6 hours
-- **Daily Collection**: PR velocity and issue health data collected daily at 11:50 PM PST
+- **Daily Collection**: Star growth, PR velocity, and issue health data collected daily at 11:50 PM PST
 - **Weekly Collection**: Package downloads collected every Sunday at 11:50 PM PST
 
-The rules were temporarily disabled during data migration but have been successfully re-enabled.
+The rules were temporarily disabled during data migration but have been successfully re-enabled. Star growth collection has been optimized from every 6 hours to once daily for efficiency.
 
 ---
 

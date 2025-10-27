@@ -501,6 +501,103 @@ async function triggerManualStarCollection(targetRepo = REPO) {
   }
 }
 
+// Package download collection functions
+async function fetchPackageDownloads(repo) {
+  try {
+    // Map repository names to npm package names
+    const packageMap = {
+      'promptfoo/promptfoo': 'promptfoo',
+      'crewAIInc/crewAI': 'crewai',
+      'langchain-ai/langchain': 'langchain'
+    };
+    
+    const packageName = packageMap[repo];
+    if (!packageName) {
+      console.log(`⚠️  No npm package mapping found for ${repo}, skipping package downloads`);
+      return null;
+    }
+    
+    console.log(`📦 Fetching package downloads for ${packageName} (${repo})`);
+    
+    // Fetch last week's downloads from npm Registry API
+    const url = `https://api.npmjs.org/downloads/point/last-week/${packageName}`;
+    const response = await axios.get(url);
+    const data = response.data;
+    
+    if (data.error) {
+      throw new Error(`npm API error: ${data.error}`);
+    }
+    
+    return {
+      downloads: data.downloads,
+      start: data.start,
+      end: data.end,
+      package: data.package
+    };
+  } catch (error) {
+    console.error(`❌ Error fetching package downloads for ${repo}:`, error.message);
+    return null;
+  }
+}
+
+async function storePackageDownloads(repo, downloadData) {
+  if (!downloadData) {
+    console.log(`⚠️  No download data to store for ${repo}`);
+    return;
+  }
+  
+  try {
+    // Convert to PST timezone
+    const now = new Date();
+    const pstOffset = -8 * 60; // PST is UTC-8
+    const pstTime = new Date(now.getTime() + (pstOffset * 60 * 1000));
+    
+    // Get week start date (Monday)
+    const weekStartDate = new Date(downloadData.start);
+    const day = weekStartDate.getDay();
+    const diff = weekStartDate.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    const weekStart = new Date(weekStartDate.setDate(diff)).toISOString().split('T')[0];
+    
+    // Check if an entry already exists for this week
+    const existingParams = {
+      TableName: PACKAGE_DOWNLOADS_TABLE,
+      KeyConditionExpression: 'repo = :repo AND week_start = :week_start',
+      ExpressionAttributeValues: {
+        ':repo': repo,
+        ':week_start': weekStart
+      }
+    };
+    
+    const existingResult = await dynamodb.query(existingParams).promise();
+    
+    if (existingResult.Items.length > 0) {
+      console.log(`Entry already exists for ${repo} week of ${weekStart}, skipping duplicate`);
+      return;
+    }
+    
+    // Store the package download data
+    const params = {
+      TableName: PACKAGE_DOWNLOADS_TABLE,
+      Item: {
+        repo: repo,
+        week_start: weekStart,
+        downloads: downloadData.downloads,
+        start_date: downloadData.start,
+        end_date: downloadData.end,
+        package_name: downloadData.package,
+        collected_at: pstTime.toISOString()
+      }
+    };
+    
+    await dynamodb.put(params).promise();
+    console.log(`📦 Stored package downloads for ${repo}: ${downloadData.downloads.toLocaleString()} downloads (week of ${weekStart})`);
+    
+  } catch (error) {
+    console.error(`❌ Error storing package downloads for ${repo}:`, error);
+    throw error;
+  }
+}
+
 // Unified collection handler for all repositories
 async function triggerUnifiedCollection() {
   try {
@@ -537,11 +634,19 @@ async function triggerUnifiedCollection() {
         await storeIssueHealth(repo, openIssues, closedCount);
         console.log(`📋 Issue health for ${repo}: ${openIssues} open, ${closedCount} closed`);
         
+        // Collect package downloads data (weekly collection)
+        const downloadData = await fetchPackageDownloads(repo);
+        if (downloadData) {
+          await storePackageDownloads(repo, downloadData);
+          console.log(`📦 Package downloads for ${repo}: ${downloadData.downloads.toLocaleString()}`);
+        }
+        
         results.repositories.push({
           repo: repo,
           starCount: starCount,
           prVelocity: { openCount, mergedCount },
-          issueHealth: { openCount: openIssues, closedCount }
+          issueHealth: { openCount: openIssues, closedCount },
+          packageDownloads: downloadData ? { downloads: downloadData.downloads } : null
         });
         
       } catch (error) {
@@ -569,23 +674,36 @@ async function triggerUnifiedCollection() {
 
 // DynamoDB helper functions
 async function queryStarHistory(repo) {
-  // Handle crewAI repository mapping
-  let dbRepo = repo;
+  // Handle crewAI repository mapping - query both possible names and merge results
+  let dbRepos = [repo];
   if (repo === 'crewAI/crewAI' || repo === 'crewAIInc/crewAI') {
-    dbRepo = 'crewAllnc/crewAI'; // Use the actual database repository name (with typo)
+    dbRepos = ['crewAllnc/crewAI', 'crewAIInc/crewAI']; // Query both the typo and correct names
   }
   
-  const params = {
-    TableName: STAR_GROWTH_TABLE,
-    KeyConditionExpression: 'repo = :repo',
-    ExpressionAttributeValues: {
-      ':repo': dbRepo
-    },
-    ScanIndexForward: true
-  };
+  let allItems = [];
   
-  const result = await dynamodb.query(params).promise();
-  return result.Items;
+  for (const dbRepo of dbRepos) {
+    const params = {
+      TableName: STAR_GROWTH_TABLE,
+      KeyConditionExpression: 'repo = :repo',
+      ExpressionAttributeValues: {
+        ':repo': dbRepo
+      },
+      ScanIndexForward: true
+    };
+    
+    const result = await dynamodb.query(params).promise();
+    allItems = allItems.concat(result.Items);
+  }
+  
+  // Sort all items by timestamp to ensure chronological order
+  allItems.sort((a, b) => {
+    const dateA = new Date(a.timestamp);
+    const dateB = new Date(b.timestamp);
+    return dateA - dateB;
+  });
+  
+  return allItems;
 }
 
 async function queryPRVelocity(repo) {

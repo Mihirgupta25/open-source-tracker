@@ -18,7 +18,6 @@ export interface OpenSourceTrackerStackProps extends cdk.StackProps {
   domainName?: string;
   githubTokenSecretName: string;
   devCredentialsSecretName?: string;
-  dataCollectionSchedule: string;
   useSharedDatabase?: boolean;
   sharedDatabaseEnvironment?: string;
 }
@@ -27,7 +26,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: OpenSourceTrackerStackProps) {
     super(scope, id, props);
 
-    const { environment, domainName, githubTokenSecretName, devCredentialsSecretName, dataCollectionSchedule, useSharedDatabase = false, sharedDatabaseEnvironment = 'prod' } = props;
+    const { environment, domainName, githubTokenSecretName, devCredentialsSecretName, useSharedDatabase = false, sharedDatabaseEnvironment = 'prod' } = props;
 
     // DynamoDB Tables
     const tableSuffix = useSharedDatabase ? sharedDatabaseEnvironment : environment;
@@ -142,13 +141,7 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     githubTokenSecret.grantRead(unifiedCollector);
 
     // EventBridge Rules for scheduled data collection
-    // Star growth: using dataCollectionSchedule parameter
-    const frequentDataCollectionRule = new events.Rule(this, 'FrequentDataCollectionRule', {
-      schedule: events.Schedule.expression(dataCollectionSchedule),
-      description: `Frequent data collection (${dataCollectionSchedule}) for ${environment} environment`,
-    });
-
-    // Daily collection: PR velocity and issue health at 11:50 PM PST (7:50 AM UTC next day)
+    // Daily collection: Star Growth, PR Velocity & Issue Health at 11:50 PM PST (7:50 AM UTC next day)
     const dailyDataCollectionRule = new events.Rule(this, 'DailyDataCollectionRule', {
       schedule: events.Schedule.expression('cron(50 7 * * ? *)'), // 7:50 AM UTC = 11:50 PM PST
       description: `Daily collection: Star Growth, PR Velocity & Issue Health data (11:50 PM PST) for ${environment} environment`,
@@ -161,7 +154,6 @@ export class OpenSourceTrackerStack extends cdk.Stack {
     });
 
     // Add targets to the rules
-    frequentDataCollectionRule.addTarget(new targets.LambdaFunction(unifiedCollector));
     dailyDataCollectionRule.addTarget(new targets.LambdaFunction(unifiedCollector));
     weeklyDataCollectionRule.addTarget(new targets.LambdaFunction(unifiedCollector));
 
