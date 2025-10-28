@@ -15,10 +15,10 @@ A sophisticated web application that automatically collects and visualizes key m
 - **🔒 Staging**: [https://d3k6epgbykuj3.cloudfront.net](https://d3k6epgbykuj3.cloudfront.net) (Password protected)
 
 ### What You'll See
-- 📈 **Star Growth**: Real-time GitHub star tracking daily at 11:50 PM PST
-- 🔄 **PR Velocity**: Daily pull request merge ratios
-- 🏥 **Issue Health**: Daily issue resolution metrics  
-- 📦 **Package Downloads**: Weekly npm download statistics
+- 📈 **Star Growth**: Real-time GitHub star tracking
+- 🔄 **PR Velocity**: Pull request merge ratios
+- 🏥 **Issue Health**: Issue resolution metrics  
+- 📦 **Package Downloads**: npm download statistics
 - 🔄 **Multi-Repository Support**: Switch between multiple repositories seamlessly
 - 🎯 **Branded Repository Tabs**: Track Promptfoo, CrewAI, and LangChain with company logos
 - 📖 **Professional About Section**: Detailed project overview with technical architecture
@@ -34,7 +34,6 @@ A sophisticated web application that automatically collects and visualizes key m
 - **Multi-Environment Support**: Separate staging and production environments with password protection
 - **Environment Detection**: Automatic API endpoint selection
 - **Multi-Repository Support**: Track multiple repositories with easy switching
-- **PST Timezone**: All timestamps automatically converted to Pacific Standard Time
 - **Professional Branding**: Octocat logo, company logos, and consistent styling
 - **Optimized Scheduling**: Efficient EventBridge rules with minimal redundancy
 
@@ -60,7 +59,7 @@ A sophisticated web application that automatically collects and visualizes key m
 
 ---
 
-## 📋 Data Collection Schedule
+## 📋 Data Collection Overview
 
 | Metric | Frequency | Time | Description |
 |--------|-----------|------|-------------|
@@ -69,16 +68,16 @@ A sophisticated web application that automatically collects and visualizes key m
 | 🏥 Issue Health | Daily | 11:50 PM PST | Closed vs open issue ratios |
 | 📦 Package Downloads | Weekly | Sundays 11:50 PM PST | npm download statistics |
 
-**Note**: All data collection is now unified into a single daily schedule for efficiency.
+**Note**: All data collection is unified for efficiency.
 
 ## 🔄 **EventBridge Rules Status**
 
 ✅ **All EventBridge rules are now active** for both staging and production environments:
 
-- **Daily Collection**: Star growth, PR velocity, and issue health data collected daily at 11:50 PM PST
-- **Weekly Collection**: Package downloads collected every Sunday at 11:50 PM PST
+- **Regular Collection**: Star growth, PR velocity, and issue health data collected regularly
+- **Package Downloads**: npm download statistics collected regularly
 
-The rules were temporarily disabled during data migration but have been successfully re-enabled. Star growth collection has been optimized from every 6 hours to once daily for efficiency.
+The rules were temporarily disabled during data migration but have been successfully re-enabled. Data collection has been optimized for efficiency.
 
 ---
 
@@ -331,10 +330,9 @@ We welcome contributions! Here's how to get started:
 - **Consistent data collection**: All repositories receive automated data collection
 
 ### 🕐 Timezone & Timestamp Improvements
-- **PST conversion**: All timestamps automatically converted to Pacific Standard Time
 - **Consistent formatting**: Unified date/time display across all environments
-- **User-friendly timestamps**: "August 1, 2025 at 06:12:16 AM" format
-- **Database consistency**: All new data stored with PST timestamps
+- **User-friendly timestamps**: Clear date/time format for better readability
+- **Database consistency**: All new data stored with consistent timestamps
 - **Frontend fixes**: Proper handling of both old and new timestamp formats
 
 ### 🔧 Technical Improvements
@@ -379,7 +377,7 @@ We welcome contributions! Here's how to get started:
 - **Advanced Filtering**: Filter data by date ranges and custom criteria
 - **Mobile Optimization**: Enhanced responsive design for mobile devices
 - **Repository Analytics**: Compare metrics across multiple repositories
-- **Timezone Consistency**: All environments use PST for timestamp display
+- **Timezone Consistency**: All environments use consistent timestamp display
 - **Brand Identity**: Consistent app icon and styling across all environments
 
 ---
