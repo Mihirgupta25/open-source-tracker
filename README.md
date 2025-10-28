@@ -59,7 +59,6 @@ A sophisticated web application that automatically collects and visualizes key m
 
 ---
 
-## 📋 Data Collection Overview
 
 | Metric | Frequency | Time | Description |
 |--------|-----------|------|-------------|
