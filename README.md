@@ -1,17 +1,18 @@
-# 🌟 Open Source Growth Tracker
+# 🌟 Open Source Startup Tracker
 
-> **Track your GitHub repository's growth with beautiful, real-time analytics**
+> **Professional-grade analytics platform for tracking open-source startup traction**
 
-A modern web application that automatically collects and visualizes key metrics for open source projects, including star growth, pull request velocity, issue health, and package downloads. Built with React 19, AWS, and deployed with automated CI/CD.
+A sophisticated web application that automatically collects and visualizes key metrics for open source projects, including star growth, pull request velocity, issue health, and package downloads. Currently used by BAM Corner Point's Data Science AI team for company diligence. Built with React 19, AWS, and deployed with automated CI/CD.
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-blue?style=for-the-badge)](https://d3ou2hv17g990f.cloudfront.net)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Production-blue?style=for-the-badge)](https://d1ak83s2ijdnk7.cloudfront.net)
 
 ---
 
 ## 🚀 Quick Start
 
 ### Try It Now
-- **🌐 Production**: [https://d3ou2hv17g990f.cloudfront.net](https://d3ou2hv17g990f.cloudfront.net) (Public access)
+- **🌐 Production**: [https://d1ak83s2ijdnk7.cloudfront.net](https://d1ak83s2ijdnk7.cloudfront.net) (Public access)
+- **🔒 Staging**: [https://d3k6epgbykuj3.cloudfront.net](https://d3k6epgbykuj3.cloudfront.net) (Password protected)
 
 ### What You'll See
 - 📈 **Star Growth**: Real-time GitHub star tracking daily at 11:50 PM PST
@@ -19,7 +20,9 @@ A modern web application that automatically collects and visualizes key metrics 
 - 🏥 **Issue Health**: Daily issue resolution metrics  
 - 📦 **Package Downloads**: Weekly npm download statistics
 - 🔄 **Multi-Repository Support**: Switch between multiple repositories seamlessly
-- 🎯 **Repository Tabs**: Track promptfoo, crewAI, and langchain repositories
+- 🎯 **Branded Repository Tabs**: Track Promptfoo, CrewAI, and LangChain with company logos
+- 📖 **Professional About Section**: Detailed project overview with technical architecture
+- 🐙 **GitHub Integration**: Clickable Octocat logo linking to source code
 
 ---
 
@@ -28,11 +31,11 @@ A modern web application that automatically collects and visualizes key metrics 
 ### 📊 Real-Time Analytics
 - **Unified Data Collection**: Single Lambda function collects all metrics for all repositories
 - **Beautiful Visualizations**: Interactive charts with hover tooltips and zoom capabilities
-- **Multi-Environment Support**: Separate staging and production environments
+- **Multi-Environment Support**: Separate staging and production environments with password protection
 - **Environment Detection**: Automatic API endpoint selection
 - **Multi-Repository Support**: Track multiple repositories with easy switching
 - **PST Timezone**: All timestamps automatically converted to Pacific Standard Time
-- **Consistent Branding**: Unified icon and styling across environments
+- **Professional Branding**: Octocat logo, company logos, and consistent styling
 - **Optimized Scheduling**: Efficient EventBridge rules with minimal redundancy
 
 ### 🏗️ Modern Architecture
@@ -44,13 +47,14 @@ A modern web application that automatically collects and visualizes key metrics 
 - **Unified Collector**: Single Lambda function handles all data collection types
 
 ### 🎨 User Experience
-- **Clean Design**: Card-based layout with professional aesthetics
+- **Professional Design**: Card-based layout with university-grade aesthetics
 - **Responsive**: Works on desktop, tablet, and mobile
-- **Interactive**: Tabbed interface for easy navigation
-- **GitHub Integration**: Direct repository access via Octocat icon
+- **Interactive**: Tabbed interface with branded company logos
+- **GitHub Integration**: Clickable Octocat logo linking to source code
+- **About Section**: Professional project overview with technical details
 - **Local Storage**: Persistent user preferences and repository selections
-- **Repository Management**: Add, remove, and switch between repositories
-- **Custom App Icon**: Professional branding with consistent styling
+- **Repository Management**: Track Promptfoo, CrewAI, and LangChain with company branding
+- **Professional Branding**: Octocat header, company logos, and consistent styling
 - **Auto-Correction**: Smart localStorage management for repository tabs
 - **Timestamp Consistency**: Proper date parsing for all data formats
 
@@ -295,16 +299,34 @@ We welcome contributions! Here's how to get started:
 
 ---
 
-## 🆕 Recent Updates (August 2025)
+## 🆕 Recent Updates (October 2025)
+
+### 🎓 Professional University Application Features
+- **About Section**: Professional project overview with technical architecture details
+- **BAM Corner Point Reference**: Added professional usage by Data Science AI team for company diligence
+- **University-Grade Design**: Enhanced aesthetics suitable for admissions applications
+- **Professional Branding**: Octocat logo, company logos, and consistent styling
+
+### 🏢 Enhanced Professional Branding
+- **Octocat Header**: Clickable GitHub logo linking to source code repository
+- **Company Logos**: Promptfoo, CrewAI, and LangChain logos in repository tabs
+- **Professional Styling**: University-grade design with enhanced visual appeal
+- **Consistent Branding**: Unified styling across staging and production environments
+
+### 🎯 Improved User Experience
+- **About Tab**: New default landing page with professional project description
+- **Tab Reordering**: About tab positioned leftmost for better navigation
+- **Professional Content**: Detailed technical architecture and interactive features
+- **Enhanced Navigation**: Improved tab management with branded company logos
 
 ### 🔄 Unified Data Collection System
-- **Unified Collector**: Single Lambda function now handles all data collection types
+- **Unified Collector**: Single Lambda function handles all data collection types
 - **Optimized Scheduling**: Reduced EventBridge rules from 10 to 4 essential rules
 - **Improved Efficiency**: All repositories processed in one scheduled run
 - **Better Error Handling**: Per-repository error handling with detailed logging
 
 ### 🎯 Multi-Repository Support
-- **Added langchain repository**: Now tracking promptfoo, crewAI, and langchain repositories
+- **Added langchain repository**: Now tracking Promptfoo, CrewAI, and LangChain repositories
 - **Repository initialization**: Easy setup of new repositories in production environment
 - **Auto-correction logic**: Smart localStorage management ensures all repository tabs are displayed
 - **Consistent data collection**: All repositories receive automated data collection
@@ -315,12 +337,6 @@ We welcome contributions! Here's how to get started:
 - **User-friendly timestamps**: "August 1, 2025 at 06:12:16 AM" format
 - **Database consistency**: All new data stored with PST timestamps
 - **Frontend fixes**: Proper handling of both old and new timestamp formats
-
-### 🎨 Brand Identity
-- **Custom app icon**: Professional circular icon with consistent styling
-- **Unified branding**: Same icon and styling across staging and production
-- **Enhanced header**: Improved layout with app icon and title
-- **Responsive design**: Icon scales properly on all devices
 
 ### 🔧 Technical Improvements
 - **Data migration scripts**: Automated copying of production data to staging
@@ -388,8 +404,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **GitHub Issues**: [Create an issue](https://github.com/Mihirgupta25/open-source-tracker/issues)
 - **Documentation**: Check this README and inline code comments
-- **Live Demo**: [Production](https://d3ou2hv17g990f.cloudfront.net)
+- **Live Demo**: [Production](https://d1ak83s2ijdnk7.cloudfront.net)
 
 ---
 
-*Last updated: August 2025 - Implemented unified data collection system, optimized EventBridge rules from 10 to 4, added langchain repository support, implemented PST timezone conversion, unified app branding across environments, enhanced localStorage auto-correction, improved data migration scripts, fixed timestamp parsing issues, and optimized production deployment workflow.*
+*Last updated: October 2025 - Added professional About section with BAM Corner Point reference, implemented Octocat header with GitHub integration, added company logos to repository tabs, enhanced university-grade design aesthetics, improved user experience with About tab as default landing page, maintained unified data collection system, and optimized production deployment workflow.*
