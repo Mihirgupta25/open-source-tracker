@@ -1644,7 +1644,7 @@ function App() {
             <h2>About</h2>
           <div style={{ fontSize: '1rem', color: '#3b3b5c', textAlign: 'left', lineHeight: '1.7' }}>
             <p style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50', marginBottom: '20px', textAlign: 'center' }}>
-              🚀 <strong>My Artifact:</strong> Open-Source Startup Tracker
+              🚀 <strong>Open-Source Startup Tracker</strong>
             </p>
             
             <p style={{ marginBottom: '18px', fontSize: '1rem' }}>
