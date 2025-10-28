@@ -1644,11 +1644,11 @@ function App() {
             <h2>About</h2>
           <div style={{ fontSize: '1rem', color: '#3b3b5c', textAlign: 'left', lineHeight: '1.7' }}>
             <p style={{ fontSize: '1.1rem', fontWeight: '600', color: '#2c3e50', marginBottom: '20px', textAlign: 'center' }}>
-              🚀 <strong>Open-Source Startup Tracker</strong>
+              🚀 <strong>My Artifact:</strong> Open-Source Startup Tracker
             </p>
             
             <p style={{ marginBottom: '18px', fontSize: '1rem' }}>
-              This website <strong>automatically tracks the open-source traction of startups</strong>, measuring how much a company's public software projects are being used in the real world.
+              This website <strong>automatically tracks the open-source traction of startups</strong>, measuring how much a company's public software projects are being used in the real world. This project is currently used by BAM Corner Point's Data Science AI team whenever diligencing a company.
             </p>
             
             <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #e9ecef' }}>
