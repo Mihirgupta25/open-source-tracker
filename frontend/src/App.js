@@ -1666,11 +1666,11 @@ function App() {
               <h3 style={{ color: '#2d5a2d', fontSize: '1rem', fontWeight: '600', marginBottom: '12px', marginTop: '0' }}>
                 💡 Interactive Features
               </h3>
-              <p style={{ marginBottom: '8px', fontSize: '0.95rem' }}>
-                • <strong>Zoom & Hover:</strong> Try zooming in or hovering over data points!<br/>
-                • <strong>Multi-Company Analysis:</strong> Each tab shows different company data<br/>
-                • <strong>Real-Time Trends:</strong> See how products are performing over time
-              </p>
+               <p style={{ marginBottom: '8px', fontSize: '0.95rem' }}>
+                 • <strong>Zoom & Hover:</strong> Try zooming in or hovering over data points!<br/>
+                 • <strong>Multi-Company Analysis:</strong> Each tab on the top shows different company data. Feel free to click around!<br/>
+                 • <strong>Real-Time Trends:</strong> See how products are performing over time
+               </p>
             </div>
             
             <p style={{ textAlign: 'center', fontSize: '0.95rem', fontStyle: 'italic', color: '#6c757d', marginBottom: '0' }}>
