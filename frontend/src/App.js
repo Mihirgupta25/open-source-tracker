@@ -1648,7 +1648,7 @@ function App() {
             </p>
             
             <p style={{ marginBottom: '18px', fontSize: '1rem' }}>
-              This website <strong>automatically tracks the open-source traction of startups</strong>, measuring how much a company's public software projects are being used in the real world. This project is currently used by BAM Corner Point's Data Science AI team whenever diligencing a company.
+              This website <strong>automatically tracks the open-source traction of startups</strong>, measuring how much a company's public software projects are being used in the real world. This project is currently used by BAM Corner Point's Data Science AI team whenever diligencing a company for investment.
             </p>
             
             <div style={{ backgroundColor: '#f8f9fa', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '1px solid #e9ecef' }}>
